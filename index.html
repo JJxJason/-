@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>约球星球 - 羽毛球智能组局与球馆评价平台</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .loader {
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: bounce 1s infinite;
+        }
+        .title {
+            color: #f9d423;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: rgba(255,255,255,0.7);
+            font-size: 1rem;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <div class="logo">🏸</div>
+        <div class="title">约球星球</div>
+        <div class="subtitle">正在进入...</div>
+    </div>
+    <script>
+        setTimeout(() => {
+            window.location.href = 'yueqiuxingqiu.html';
+        }, 1500);
+    </script>
+</body>
+</html>

@@ -1,0 +1,2366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>约球星球 - 找球局</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .city-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .city-tab {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--dark-border);
+            border-radius: 20px;
+            padding: 8px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+        
+        .city-tab.active,
+        .city-tab:hover {
+            background: rgba(249,212,35,0.2);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .city-tab.hot::after {
+            content: '🔥';
+            margin-left: 5px;
+        }
+        
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+        }
+        
+        .filter-item select {
+            background: transparent;
+            border: 1px solid var(--dark-border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        
+        .filter-item select option {
+            background: #0f2027;
+            color: #fff;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--dark-border);
+            border-radius: 20px;
+            padding: 10px 18px;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+        }
+        
+        .search-box input::placeholder {
+            color: #888;
+        }
+        
+        .sort-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+        
+        .sort-options {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .sort-option {
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .sort-option.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .group-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 20px;
+        }
+        
+        .group-card {
+            background: var(--dark-card);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--dark-border);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .group-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            border-color: rgba(249,212,35,0.3);
+        }
+        
+        .group-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .group-card:hover::before {
+            opacity: 1;
+        }
+        
+        .group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .group-title {
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+        
+        .group-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 10px;
+        }
+        
+        .status-hot {
+            background: rgba(255,78,80,0.2);
+            color: var(--secondary-color);
+        }
+        
+        .status-normal {
+            background: rgba(96,165,250,0.2);
+            color: var(--info-color);
+        }
+        
+        .status-full {
+            background: rgba(255,255,255,0.1);
+            color: #888;
+        }
+        
+        .group-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .info-row .value {
+            color: #fff;
+            font-weight: 500;
+        }
+        
+        .group-location {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .location-name {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+        }
+        
+        .location-detail {
+            color: #888;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+        
+        .organizer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-top: 15px;
+            border-top: 1px solid var(--dark-border);
+        }
+        
+        .organizer-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        .organizer-info {
+            flex: 1;
+        }
+        
+        .organizer-name {
+            color: #fff;
+            font-weight: 500;
+        }
+        
+        .organizer-level {
+            font-size: 0.8rem;
+            color: var(--info-color);
+        }
+        
+        .join-btn {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 8px 20px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #000;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .join-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .join-btn.disabled {
+            background: #333;
+            color: #888;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .create-btn {
+            position: fixed;
+            right: 30px;
+            bottom: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(249,212,35,0.4);
+            transition: transform 0.3s;
+            z-index: 100;
+        }
+        
+        .create-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .modal-content {
+            padding: 30px;
+        }
+        
+        .modal-content h2 {
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            font-size: 1.4rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--dark-border);
+            border-radius: 12px;
+            padding: 12px;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary-color);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .form-actions button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            border: none;
+            color: #000;
+        }
+        
+        .btn-primary:hover {
+            transform: scale(1.02);
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--dark-border);
+            color: #fff;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.15);
+        }
+        
+        @media (max-width: 768px) {
+            .group-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .filter-bar {
+                flex-direction: column;
+            }
+            .search-box {
+                order: -1;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateX(-50%) translateY(-30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(-50%) translateY(-30px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <div class="logo">🏸 约球星球</div>
+        <div class="nav-links">
+            <a href="yueqiuxingqiu.html">首页</a>
+            <a href="yueqiu-group.html" class="active">找球局</a>
+            <a href="yueqiu-court.html">球馆</a>
+            <a href="javascript:void(0)" onclick="showMyBallGamesModal()">📋 我的球局</a>
+            <a href="yueqiu-profile.html">我的</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="city-tabs">
+            <div class="city-tab active hot" onclick="switchCity('all')">全部</div>
+            <div class="city-tab hot" onclick="switchCity('beijing')">北京</div>
+            <div class="city-tab hot" onclick="switchCity('shanghai')">上海</div>
+            <div class="city-tab hot" onclick="switchCity('shenzhen')">深圳</div>
+            <div class="city-tab" onclick="switchCity('guangzhou')">广州</div>
+            <div class="city-tab" onclick="switchCity('chengdu')">成都</div>
+            <div class="city-tab" onclick="switchCity('hangzhou')">杭州</div>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter-item">
+                <span>📍</span>
+                <select id="district-select" onchange="filterByDistrict()">
+                    <option value="">全部区域</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <span>🎯</span>
+                <select id="level-select" onchange="filterGroups()">
+                    <option value="">全部水平</option>
+                    <option value="新手入门">新手入门</option>
+                    <option value="业余初级">业余初级</option>
+                    <option value="业余中级">业余中级</option>
+                    <option value="业余高级">业余高级</option>
+                    <option value="专业水平">专业水平</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <span>🕐</span>
+                <select id="time-select" onchange="filterGroups()">
+                    <option value="">全部时间</option>
+                    <option value="today">今天</option>
+                    <option value="tomorrow">明天</option>
+                    <option value="weekend">周末</option>
+                    <option value="weekday">工作日</option>
+                </select>
+            </div>
+            <div class="search-box">
+                <input type="text" placeholder="搜索球局名称、球馆...">
+            </div>
+        </div>
+
+        <div class="sort-bar">
+            <span>共找到 86 个球局</span>
+            <div class="sort-options">
+                <span class="sort-option active" onclick="sortGroups('time', this)">时间最近</span>
+                <span class="sort-option" onclick="sortGroups('match', this)">匹配度</span>
+                <span class="sort-option" onclick="sortGroups('hot', this)">最热门</span>
+            </div>
+        </div>
+
+        <div class="group-grid" id="group-grid">
+            <div class="group-card" data-city="beijing" data-district="海淀区" data-level="业余中级" data-day="weekday" onclick="openGroupDetail(this, event)">
+                <div class="group-header">
+                    <div>
+                        <div class="group-title">周三下班后快乐羽球</div>
+                        <span class="group-status status-hot">缺2人 · 火热</span>
+                    </div>
+                </div>
+                <div class="group-info">
+                    <div class="info-row">
+                        <span>📅</span>
+                        <span>本周三 19:30 - 21:30</span>
+                    </div>
+                    <div class="info-row">
+                        <span>🎯</span>
+                        <span>水平: <span class="value">业余中级</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>👥</span>
+                        <span>人数: <span class="value">4/6</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>💰</span>
+                        <span>费用: <span class="value">60元/人</span></span>
+                    </div>
+                </div>
+                <div class="group-location">
+                    <div class="location-name">首体网球羽毛球健身中心</div>
+                    <div class="location-detail">📍 海淀区中关村南大街54号首都体育馆内<br>🚇 地铁4号线/9号线国家图书馆站C口</div>
+                </div>
+                <div class="organizer">
+                    <div class="organizer-avatar">张</div>
+                    <div class="organizer-info">
+                        <div class="organizer-name">羽毛球小王子</div>
+                        <div class="organizer-level">4.0级 · 组织23次</div>
+                    </div>
+                    <button class="join-btn" onclick="openJoinModal(this)">立即报名</button>
+                </div>
+            </div>
+
+            <div class="group-card" data-city="beijing" data-district="朝阳区" data-level="新手入门" data-day="weekend">
+                <div class="group-header">
+                    <div>
+                        <div class="group-title">周末新手交友局</div>
+                        <span class="group-status status-normal">缺4人</span>
+                    </div>
+                </div>
+                <div class="group-info">
+                    <div class="info-row">
+                        <span>📅</span>
+                        <span>本周六 14:00 - 16:00</span>
+                    </div>
+                    <div class="info-row">
+                        <span>🎯</span>
+                        <span>水平: <span class="value">新手入门</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>👥</span>
+                        <span>人数: <span class="value">2/6</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>💰</span>
+                        <span>费用: <span class="value">50元/人</span></span>
+                    </div>
+                </div>
+                <div class="group-location">
+                    <div class="location-name">朝阳体育馆羽毛球馆</div>
+                    <div class="location-detail">📍 朝阳区姚家园路10号朝阳体育馆内<br>🚇 地铁6号线十里堡站B口</div>
+                </div>
+                <div class="organizer">
+                    <div class="organizer-avatar">李</div>
+                    <div class="organizer-info">
+                        <div class="organizer-name">李教练</div>
+                        <div class="organizer-level">4.5级 · 组织15次</div>
+                    </div>
+                    <button class="join-btn" onclick="openJoinModal(this)">立即报名</button>
+                </div>
+            </div>
+
+            <div class="group-card" data-city="beijing" data-district="朝阳区" data-level="业余高级" data-day="weekday">
+                <div class="group-header">
+                    <div>
+                        <div class="group-title">奥体高手切磋局</div>
+                        <span class="group-status status-full">已满员</span>
+                    </div>
+                </div>
+                <div class="group-info">
+                    <div class="info-row">
+                        <span>📅</span>
+                        <span>本周四 20:00 - 22:00</span>
+                    </div>
+                    <div class="info-row">
+                        <span>🎯</span>
+                        <span>水平: <span class="value">业余高级</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>👥</span>
+                        <span>人数: <span class="value">8/8</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>💰</span>
+                        <span>费用: <span class="value">80元/人</span></span>
+                    </div>
+                </div>
+                <div class="group-location">
+                    <div class="location-name">奥体中心羽毛球馆</div>
+                    <div class="location-detail">📍 朝阳区国家奥林匹克体育中心内<br>🚇 地铁8号线奥体中心站D口</div>
+                </div>
+                <div class="organizer">
+                    <div class="organizer-avatar">王</div>
+                    <div class="organizer-info">
+                        <div class="organizer-name">王者归来</div>
+                        <div class="organizer-level">5.0级 · 组织45次</div>
+                    </div>
+                    <button class="join-btn disabled">已满员</button>
+                </div>
+            </div>
+
+            <div class="group-card" data-city="shanghai" data-district="浦东新区" data-level="业余中级" data-day="weekend">
+                <div class="group-header">
+                    <div>
+                        <div class="group-title">上海源深周末对抗赛</div>
+                        <span class="group-status status-hot">缺3人 · 火热</span>
+                    </div>
+                </div>
+                <div class="group-info">
+                    <div class="info-row">
+                        <span>📅</span>
+                        <span>本周日 10:00 - 12:00</span>
+                    </div>
+                    <div class="info-row">
+                        <span>🎯</span>
+                        <span>水平: <span class="value">业余中级</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>👥</span>
+                        <span>人数: <span class="value">5/8</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>💰</span>
+                        <span>费用: <span class="value">70元/人</span></span>
+                    </div>
+                </div>
+                <div class="group-location">
+                    <div class="location-name">上海源深体育中心羽毛球馆</div>
+                    <div class="location-detail">📍 浦东新区张杨路1458号源深体育中心内<br>🚇 地铁6号线源深体育中心站2号口</div>
+                </div>
+                <div class="organizer">
+                    <div class="organizer-avatar">陈</div>
+                    <div class="organizer-info">
+                        <div class="organizer-name">小陈爱打球</div>
+                        <div class="organizer-level">4.0级 · 组织18次</div>
+                    </div>
+                    <button class="join-btn" onclick="openJoinModal(this)">立即报名</button>
+                </div>
+            </div>
+
+            <div class="group-card" data-city="shenzhen" data-district="南山区" data-level="业余高级" data-day="weekend">
+                <div class="group-header">
+                    <div>
+                        <div class="group-title">深圳湾精英双打局</div>
+                        <span class="group-status status-normal">缺2人</span>
+                    </div>
+                </div>
+                <div class="group-info">
+                    <div class="info-row">
+                        <span>📅</span>
+                        <span>本周五 19:00 - 21:00</span>
+                    </div>
+                    <div class="info-row">
+                        <span>🎯</span>
+                        <span>水平: <span class="value">业余高级</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>👥</span>
+                        <span>人数: <span class="value">6/8</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>💰</span>
+                        <span>费用: <span class="value">90元/人</span></span>
+                    </div>
+                </div>
+                <div class="group-location">
+                    <div class="location-name">深圳湾体育中心羽毛球馆</div>
+                    <div class="location-detail">📍 南山区滨海大道深圳湾体育中心内<br>🚇 地铁2号线科苑站D口</div>
+                </div>
+                <div class="organizer">
+                    <div class="organizer-avatar">林</div>
+                    <div class="organizer-info">
+                        <div class="organizer-name">小林同学</div>
+                        <div class="organizer-level">4.5级 · 组织32次</div>
+                    </div>
+                    <button class="join-btn" onclick="openJoinModal(this)">立即报名</button>
+                </div>
+            </div>
+
+            <div class="group-card" data-city="guangzhou" data-district="天河区" data-level="新手入门" data-day="weekend">
+                <div class="group-header">
+                    <div>
+                        <div class="group-title">广州天河新手训练营</div>
+                        <span class="group-status status-hot">缺5人 · 火热</span>
+                    </div>
+                </div>
+                <div class="group-info">
+                    <div class="info-row">
+                        <span>📅</span>
+                        <span>本周六 15:00 - 17:00</span>
+                    </div>
+                    <div class="info-row">
+                        <span>🎯</span>
+                        <span>水平: <span class="value">新手入门</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>👥</span>
+                        <span>人数: <span class="value">3/8</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>💰</span>
+                        <span>费用: <span class="value">65元/人</span></span>
+                    </div>
+                </div>
+                <div class="group-location">
+                    <div class="location-name">广州体育中心羽毛球馆</div>
+                    <div class="location-detail">📍 天河区体育西路广州体育中心内<br>🚇 地铁1号线体育西路站G口</div>
+                </div>
+                <div class="organizer">
+                    <div class="organizer-avatar">周</div>
+                    <div class="organizer-info">
+                        <div class="organizer-name">周教练</div>
+                        <div class="organizer-level">4.5级 · 组织28次</div>
+                    </div>
+                    <button class="join-btn" onclick="openJoinModal(this)">立即报名</button>
+                </div>
+            </div>
+
+            <div class="group-card" data-city="chengdu" data-district="锦江区" data-level="业余初级" data-day="weekend">
+                <div class="group-header">
+                    <div>
+                        <div class="group-title">成都体中心快乐周末</div>
+                        <span class="group-status status-normal">缺3人</span>
+                    </div>
+                </div>
+                <div class="group-info">
+                    <div class="info-row">
+                        <span>📅</span>
+                        <span>本周日 09:00 - 11:00</span>
+                    </div>
+                    <div class="info-row">
+                        <span>🎯</span>
+                        <span>水平: <span class="value">业余初级</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>👥</span>
+                        <span>人数: <span class="value">3/6</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>💰</span>
+                        <span>费用: <span class="value">55元/人</span></span>
+                    </div>
+                </div>
+                <div class="group-location">
+                    <div class="location-name">成都体育中心羽毛球馆</div>
+                    <div class="location-detail">📍 锦江区人民中路一段118号成都体育中心内<br>🚇 地铁1号线文殊院站B口</div>
+                </div>
+                <div class="organizer">
+                    <div class="organizer-avatar">刘</div>
+                    <div class="organizer-info">
+                        <div class="organizer-name">刘哥</div>
+                        <div class="organizer-level">3.5级 · 组织12次</div>
+                    </div>
+                    <button class="join-btn" onclick="openJoinModal(this)">立即报名</button>
+                </div>
+            </div>
+
+            <div class="group-card" data-city="hangzhou" data-district="西湖区" data-level="业余高级" data-day="weekday">
+                <div class="group-header">
+                    <div>
+                        <div class="group-title">杭州黄龙精英局</div>
+                        <span class="group-status status-normal">缺1人</span>
+                    </div>
+                </div>
+                <div class="group-info">
+                    <div class="info-row">
+                        <span>📅</span>
+                        <span>本周四 18:30 - 20:30</span>
+                    </div>
+                    <div class="info-row">
+                        <span>🎯</span>
+                        <span>水平: <span class="value">业余高级</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>👥</span>
+                        <span>人数: <span class="value">7/8</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>💰</span>
+                        <span>费用: <span class="value">85元/人</span></span>
+                    </div>
+                </div>
+                <div class="group-location">
+                    <div class="location-name">黄龙体育中心羽毛球馆</div>
+                    <div class="location-detail">📍 西湖区曙光路120号黄龙体育中心内<br>🚇 地铁2号线黄龙体育中心站C口</div>
+                </div>
+                <div class="organizer">
+                    <div class="organizer-avatar">赵</div>
+                    <div class="organizer-info">
+                        <div class="organizer-name">小赵很能打</div>
+                        <div class="organizer-level">5.0级 · 组织35次</div>
+                    </div>
+                    <button class="join-btn" onclick="openJoinModal(this)">立即报名</button>
+                </div>
+            </div>
+
+            <div class="group-card" data-city="beijing" data-district="海淀区" data-level="专业水平" data-day="weekend">
+                <div class="group-header">
+                    <div>
+                        <div class="group-title">首体专业对抗赛</div>
+                        <span class="group-status status-hot">缺2人 · 火热</span>
+                    </div>
+                </div>
+                <div class="group-info">
+                    <div class="info-row">
+                        <span>📅</span>
+                        <span>本周日 09:00 - 12:00</span>
+                    </div>
+                    <div class="info-row">
+                        <span>🎯</span>
+                        <span>水平: <span class="value">专业水平</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>👥</span>
+                        <span>人数: <span class="value">6/8</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>💰</span>
+                        <span>费用: <span class="value">120元/人</span></span>
+                    </div>
+                </div>
+                <div class="group-location">
+                    <div class="location-name">首体网球羽毛球健身中心</div>
+                    <div class="location-detail">📍 海淀区中关村南大街54号首都体育馆内<br>🚇 地铁4号线/9号线国家图书馆站C口</div>
+                </div>
+                <div class="organizer">
+                    <div class="organizer-avatar">陈</div>
+                    <div class="organizer-info">
+                        <div class="organizer-name">陈教练</div>
+                        <div class="organizer-level">6.0级 · 组织42次</div>
+                    </div>
+                    <button class="join-btn" onclick="openJoinModal(this)">立即报名</button>
+                </div>
+            </div>
+
+            <div class="group-card" data-city="guangzhou" data-district="天河区" data-level="专业水平" data-day="weekday">
+                <div class="group-header">
+                    <div>
+                        <div class="group-title">天河专业训练局</div>
+                        <span class="group-status status-normal">缺3人</span>
+                    </div>
+                </div>
+                <div class="group-info">
+                    <div class="info-row">
+                        <span>📅</span>
+                        <span>本周五 19:00 - 22:00</span>
+                    </div>
+                    <div class="info-row">
+                        <span>🎯</span>
+                        <span>水平: <span class="value">专业水平</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>👥</span>
+                        <span>人数: <span class="value">5/8</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>💰</span>
+                        <span>费用: <span class="value">100元/人</span></span>
+                    </div>
+                </div>
+                <div class="group-location">
+                    <div class="location-name">天河体育中心羽毛球馆</div>
+                    <div class="location-detail">📍 天河区天河路299号天河体育中心内<br>🚇 地铁1号线/3号线体育西路站G口</div>
+                </div>
+                <div class="organizer">
+                    <div class="organizer-avatar">林</div>
+                    <div class="organizer-info">
+                        <div class="organizer-name">林丹粉丝</div>
+                        <div class="organizer-level">5.5级 · 组织28次</div>
+                    </div>
+                    <button class="join-btn" onclick="openJoinModal(this)">立即报名</button>
+                </div>
+            </div>
+
+            <div class="group-card" data-city="shanghai" data-district="浦东新区" data-level="专业水平" data-day="weekend">
+                <div class="group-header">
+                    <div>
+                        <div class="group-title">源深专业双打赛</div>
+                        <span class="group-status status-hot">缺4人 · 火热</span>
+                    </div>
+                </div>
+                <div class="group-info">
+                    <div class="info-row">
+                        <span>📅</span>
+                        <span>本周六 14:00 - 17:00</span>
+                    </div>
+                    <div class="info-row">
+                        <span>🎯</span>
+                        <span>水平: <span class="value">专业水平</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>👥</span>
+                        <span>人数: <span class="value">4/8</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>💰</span>
+                        <span>费用: <span class="value">110元/人</span></span>
+                    </div>
+                </div>
+                <div class="group-location">
+                    <div class="location-name">上海源深体育中心羽毛球馆</div>
+                    <div class="location-detail">📍 浦东新区张杨路1458号源深体育中心内<br>🚇 地铁6号线源深体育中心站2号口</div>
+                </div>
+                <div class="organizer">
+                    <div class="organizer-avatar">王</div>
+                    <div class="organizer-info">
+                        <div class="organizer-name">上海球王</div>
+                        <div class="organizer-level">5.5级 · 组织36次</div>
+                    </div>
+                    <button class="join-btn" onclick="openJoinModal(this)">立即报名</button>
+                </div>
+            </div>
+
+            <div class="group-card" data-city="shenzhen" data-district="南山区" data-level="业余初级" data-day="weekday">
+                <div class="group-header">
+                    <div>
+                        <div class="group-title">深圳湾新手夜场</div>
+                        <span class="group-status status-hot">缺5人 · 火热</span>
+                    </div>
+                </div>
+                <div class="group-info">
+                    <div class="info-row">
+                        <span>📅</span>
+                        <span>本周三 19:30 - 21:30</span>
+                    </div>
+                    <div class="info-row">
+                        <span>🎯</span>
+                        <span>水平: <span class="value">业余初级</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>👥</span>
+                        <span>人数: <span class="value">3/8</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>💰</span>
+                        <span>费用: <span class="value">80元/人</span></span>
+                    </div>
+                </div>
+                <div class="group-location">
+                    <div class="location-name">深圳湾体育中心羽毛球馆</div>
+                    <div class="location-detail">📍 南山区滨海大道深圳湾体育中心内<br>🚇 地铁11号线后海站D口</div>
+                </div>
+                <div class="organizer">
+                    <div class="organizer-avatar">黄</div>
+                    <div class="organizer-info">
+                        <div class="organizer-name">小黄教练</div>
+                        <div class="organizer-level">4.0级 · 组织22次</div>
+                    </div>
+                    <button class="join-btn" onclick="openJoinModal(this)">立即报名</button>
+                </div>
+            </div>
+
+            <div class="group-card" data-city="shanghai" data-district="徐汇区" data-level="业余中级" data-day="weekday">
+                <div class="group-header">
+                    <div>
+                        <div class="group-title">上海体育馆夜场局</div>
+                        <span class="group-status status-hot">缺4人 · 火热</span>
+                    </div>
+                </div>
+                <div class="group-info">
+                    <div class="info-row">
+                        <span>📅</span>
+                        <span>本周三 21:00 - 23:00</span>
+                    </div>
+                    <div class="info-row">
+                        <span>🎯</span>
+                        <span>水平: <span class="value">业余中级</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>👥</span>
+                        <span>人数: <span class="value">4/8</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span>💰</span>
+                        <span>费用: <span class="value">95元/人</span></span>
+                    </div>
+                </div>
+                <div class="group-location">
+                    <div class="location-name">上海体育馆羽毛球馆</div>
+                    <div class="location-detail">📍 徐汇区漕溪北路1111号上海体育馆内<br>🚇 地铁1/4号线上海体育馆站5号口</div>
+                </div>
+                <div class="organizer">
+                    <div class="organizer-avatar">孙</div>
+                    <div class="organizer-info">
+                        <div class="organizer-name">孙大圣</div>
+                        <div class="organizer-level">4.0级 · 组织21次</div>
+                    </div>
+                    <button class="join-btn" onclick="openJoinModal(this)">立即报名</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="create-btn" onclick="openCreateModal()">+</div>
+
+    <div class="modal-overlay" id="join-modal">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-content">
+                <h2>🏸 确认报名</h2>
+                <div id="join-group-info" style="margin-bottom: 20px;"></div>
+                <div class="form-group">
+                    <label>联系电话</label>
+                    <input type="tel" placeholder="请输入您的手机号">
+                </div>
+                <div class="form-group">
+                    <label>备注信息（选填）</label>
+                    <textarea placeholder="给组织者留言..." rows="3" style="resize: none;"></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn-secondary" onclick="closeJoinModal()">取消</button>
+                    <button class="btn-primary" onclick="submitJoin()">确认报名</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="create-modal">
+        <div class="modal" style="max-width: 550px;">
+            <div class="modal-content">
+                <h2>📝 创建新球局</h2>
+                
+                <div class="form-group">
+                    <label>球局名称</label>
+                    <input type="text" placeholder="给你的球局起个名字">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>日期</label>
+                        <input type="date">
+                    </div>
+                    <div class="form-group">
+                        <label>时间</label>
+                        <input type="time">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>时长</label>
+                        <select>
+                            <option>1小时</option>
+                            <option>1.5小时</option>
+                            <option>2小时</option>
+                            <option>2.5小时</option>
+                            <option>3小时</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>人数限制</label>
+                        <select>
+                            <option>4人</option>
+                            <option>6人</option>
+                            <option>8人</option>
+                            <option>10人</option>
+                            <option>12人</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>水平要求</label>
+                        <select>
+                            <option>新手入门</option>
+                            <option>业余初级</option>
+                            <option>业余中级</option>
+                            <option>业余高级</option>
+                            <option>专业水平</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>费用</label>
+                        <input type="number" placeholder="元/人">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>选择球馆</label>
+                    <select>
+                        <optgroup label="🇨🇳 北京">
+                            <option>北京体育馆羽毛球中心</option>
+                            <option>国家体育总局训练局羽毛球馆</option>
+                            <option>光彩体育馆羽毛球馆</option>
+                            <option>地坛体育馆羽毛球中心</option>
+                            <option>月坛体育馆羽毛球馆</option>
+                            <option>广安体育馆羽毛球中心</option>
+                            <option>朝阳体育馆羽毛球馆</option>
+                            <option>海淀体育中心羽毛球馆</option>
+                            <option>东城体育中心羽毛球馆</option>
+                            <option>丰台体育中心羽毛球馆</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 上海">
+                            <option>上海体育馆羽毛球中心</option>
+                            <option>东方体育中心羽毛球馆</option>
+                            <option>静安体育中心羽毛球馆</option>
+                            <option>徐汇体育中心羽毛球馆</option>
+                            <option>浦东源深体育中心羽毛球馆</option>
+                            <option>黄浦体育馆羽毛球中心</option>
+                            <option>虹口足球场羽毛球馆</option>
+                            <option>杨浦体育馆羽毛球中心</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 深圳">
+                            <option>深圳体育馆羽毛球中心</option>
+                            <option>福田体育中心羽毛球馆</option>
+                            <option>罗湖体育馆羽毛球中心</option>
+                            <option>南山文体中心羽毛球馆</option>
+                            <option>龙华文体中心羽毛球馆</option>
+                            <option>宝安体育中心羽毛球馆</option>
+                            <option>深圳湾体育中心羽毛球馆</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 广州">
+                            <option>天河体育中心羽毛球馆</option>
+                            <option>越秀体育中心羽毛球中心</option>
+                            <option>海珠体育中心羽毛球馆</option>
+                            <option>荔湾体育馆羽毛球中心</option>
+                            <option>番禺体育中心羽毛球馆</option>
+                            <option>白云体育中心羽毛球馆</option>
+                            <option>广州体育馆羽毛球中心</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 成都">
+                            <option>四川省体育馆羽毛球中心</option>
+                            <option>成都市体育中心羽毛球馆</option>
+                            <option>锦江体育中心羽毛球馆</option>
+                            <option>武侯体育中心羽毛球馆</option>
+                            <option>金牛体育中心羽毛球馆</option>
+                            <option>成华体育中心羽毛球馆</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 杭州">
+                            <option>黄龙体育中心羽毛球馆</option>
+                            <option>杭州体育馆羽毛球中心</option>
+                            <option>江干体育中心羽毛球馆</option>
+                            <option>滨江体育馆羽毛球中心</option>
+                            <option>西湖文体中心羽毛球馆</option>
+                            <option>拱墅体育中心羽毛球馆</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 武汉">
+                            <option>武汉体育中心羽毛球馆</option>
+                            <option>洪山体育中心羽毛球馆</option>
+                            <option>武昌体育馆羽毛球中心</option>
+                            <option>汉口体育馆羽毛球中心</option>
+                            <option>江岸体育中心羽毛球馆</option>
+                            <option>硚口体育中心羽毛球馆</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 南京">
+                            <option>南京奥体中心羽毛球馆</option>
+                            <option>五台山体育中心羽毛球馆</option>
+                            <option>江宁体育中心羽毛球馆</option>
+                            <option>浦口体育中心羽毛球馆</option>
+                            <option>秦淮体育馆羽毛球中心</option>
+                            <option>鼓楼体育中心羽毛球馆</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 西安">
+                            <option>陕西省体育场羽毛球中心</option>
+                            <option>西安体育中心羽毛球馆</option>
+                            <option>碑林体育馆羽毛球中心</option>
+                            <option>雁塔体育中心羽毛球馆</option>
+                            <option>新城体育中心羽毛球馆</option>
+                            <option>莲湖文体中心羽毛球馆</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 重庆">
+                            <option>重庆市体育馆羽毛球中心</option>
+                            <option>奥体中心羽毛球馆</option>
+                            <option>江南体育馆羽毛球中心</option>
+                            <option>大田湾体育中心羽毛球馆</option>
+                            <option>渝北体育中心羽毛球馆</option>
+                            <option>沙坪坝体育中心羽毛球馆</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 天津">
+                            <option>天津体育馆羽毛球中心</option>
+                            <option>奥体中心羽毛球馆</option>
+                            <option>和平体育中心羽毛球馆</option>
+                            <option>河西体育中心羽毛球馆</option>
+                            <option>南开体育馆羽毛球中心</option>
+                            <option>河东体育中心羽毛球馆</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 苏州">
+                            <option>苏州体育中心羽毛球馆</option>
+                            <option>工业园区体育中心羽毛球馆</option>
+                            <option>姑苏体育中心羽毛球馆</option>
+                            <option>吴中体育中心羽毛球馆</option>
+                            <option>新区体育中心羽毛球馆</option>
+                            <option>相城体育中心羽毛球馆</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 青岛">
+                            <option>青岛体育中心羽毛球馆</option>
+                            <option>奥帆中心羽毛球馆</option>
+                            <option>市南体育中心羽毛球馆</option>
+                            <option>市北体育中心羽毛球馆</option>
+                            <option>李沧体育中心羽毛球馆</option>
+                            <option>崂山体育中心羽毛球馆</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 长沙">
+                            <option>贺龙体育中心羽毛球馆</option>
+                            <option>长沙市体育馆羽毛球中心</option>
+                            <option>芙蓉体育中心羽毛球馆</option>
+                            <option>岳麓体育中心羽毛球馆</option>
+                            <option>天心体育中心羽毛球馆</option>
+                            <option>雨花体育中心羽毛球馆</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 郑州">
+                            <option>河南省体育馆羽毛球中心</option>
+                            <option>郑州体育中心羽毛球馆</option>
+                            <option>金水体育中心羽毛球馆</option>
+                            <option>二七体育中心羽毛球馆</option>
+                            <option>中原体育中心羽毛球馆</option>
+                            <option>管城体育中心羽毛球馆</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 东莞">
+                            <option>东莞体育中心羽毛球馆</option>
+                            <option>南城体育中心羽毛球馆</option>
+                            <option>东城体育中心羽毛球馆</option>
+                            <option>莞城体育馆羽毛球中心</option>
+                            <option>万江体育中心羽毛球馆</option>
+                            <option>虎门体育中心羽毛球馆</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 福州">
+                            <option>福建省体育馆羽毛球中心</option>
+                            <option>福州体育中心羽毛球馆</option>
+                            <option>鼓楼体育中心羽毛球馆</option>
+                            <option>台江体育中心羽毛球馆</option>
+                            <option>仓山体育中心羽毛球馆</option>
+                            <option>晋安体育中心羽毛球馆</option>
+                        </optgroup>
+                        <optgroup label="🇨🇳 厦门">
+                            <option>厦门体育中心羽毛球馆</option>
+                            <option>嘉庚体育馆羽毛球中心</option>
+                            <option>思明体育中心羽毛球馆</option>
+                            <option>湖里体育中心羽毛球馆</option>
+                            <option>集美体育中心羽毛球馆</option>
+                            <option>海沧体育中心羽毛球馆</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>备注说明</label>
+                    <textarea placeholder="添加一些备注信息，比如活动规则、注意事项等"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn-secondary" onclick="closeCreateModal()">取消</button>
+                    <button class="btn-primary" onclick="submitCreate()">创建球局</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openCreateModal() {
+            document.getElementById('create-modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeCreateModal() {
+            document.getElementById('create-modal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
+        let currentJoinInfo = null;
+
+        function openGroupDetail(card, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+
+            const title = card.querySelector('.group-title').textContent;
+            const status = card.querySelector('.group-status').textContent;
+            const time = card.querySelectorAll('.info-row span')[1].textContent;
+            const level = card.querySelector('.info-row:nth-child(2) .value').textContent;
+            const people = card.querySelector('.info-row:nth-child(3) .value').textContent;
+            const fee = card.querySelector('.info-row:nth-child(4) .value').textContent;
+            const locationName = card.querySelector('.location-name').textContent;
+            const locationDetail = card.querySelector('.location-detail').innerHTML;
+            const organizerName = card.querySelector('.organizer-name').textContent;
+            const organizerLevel = card.querySelector('.organizer-level').textContent;
+            const organizerAvatar = card.querySelector('.organizer-avatar').textContent;
+
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.id = 'group-detail-modal';
+            modal.style.zIndex = '2000';
+
+            modal.innerHTML = `
+                <div class="modal" style="max-width: 500px; max-height: 85vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        🏸 球局详情
+                        <div class="close-btn" onclick="document.getElementById('group-detail-modal').remove(); document.body.style.overflow='auto';">✕</div>
+                    </div>
+                    <div class="modal-body" style="padding: 20px;">
+                        <div style="background: linear-gradient(135deg, rgba(249, 212, 35, 0.15), rgba(255, 78, 80, 0.15)); border-radius: 15px; padding: 20px; margin-bottom: 15px; border: 1px solid rgba(249, 212, 35, 0.3);">
+                            <div style="color: #f9d423; font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;">${title}</div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <span style="background: rgba(255, 78, 80, 0.2); color: #ff4e50; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem;">${status}</span>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px;">
+                                <div style="color: #888; font-size: 0.8rem; margin-bottom: 4px;">🕐 时间</div>
+                                <div style="color: #fff;">${time}</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px;">
+                                <div style="color: #888; font-size: 0.8rem; margin-bottom: 4px;">🎯 水平</div>
+                                <div style="color: #fff;">${level}</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px;">
+                                <div style="color: #888; font-size: 0.8rem; margin-bottom: 4px;">💰 费用</div>
+                                <div style="color: #fff;">${fee}</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px;">
+                                <div style="color: #888; font-size: 0.8rem; margin-bottom: 4px;">👥 人数</div>
+                                <div style="color: #fff;">${people}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 15px;">
+                            <div style="color: #888; font-size: 0.8rem; margin-bottom: 4px;">📍 球馆</div>
+                            <div style="color: var(--primary-color); font-weight: 500; margin-bottom: 5px;">${locationName}</div>
+                            <div style="color: rgba(255,255,255,0.7); font-size: 0.9rem; line-height: 1.5;">${locationDetail}</div>
+                        </div>
+                        
+                        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 20px;">
+                            <div style="color: #888; font-size: 0.8rem; margin-bottom: 8px;">👤 组织者</div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: bold;">${organizerAvatar}</div>
+                                <div>
+                                    <div style="color: #fff; font-weight: 500;">${organizerName}</div>
+                                    <div style="color: var(--info-color); font-size: 0.8rem;">${organizerLevel}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="join-btn" style="width: 100%; padding: 14px; font-size: 1rem; border-radius: 12px;" onclick="document.getElementById('group-detail-modal').remove(); document.body.style.overflow='auto';">关闭</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function openJoinModal(btn, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+
+            const card = btn.closest('.group-card');
+            const title = card.querySelector('.group-title').textContent;
+
+            const existingJoins = JSON.parse(localStorage.getItem('myGroupJoins') || '[]');
+            const alreadyJoined = existingJoins.some(j => j.title === title);
+            if (alreadyJoined) {
+                showToast('您已报名过此球局，每人每场只能报名一次', 'warning');
+                return;
+            }
+
+            const time = card.querySelectorAll('.info-row span')[1].textContent;
+            const level = card.querySelector('.info-row:nth-child(2) .value').textContent;
+            const fee = card.querySelector('.info-row:nth-child(4) .value').textContent;
+            const location = card.querySelector('.location-name').textContent;
+            const organizer = card.querySelector('.organizer-name').textContent;
+
+            currentJoinInfo = { title, time, level, fee, location, organizer, currentCard: card };
+
+            const infoHtml = `
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 10px;">
+                    <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; color: var(--primary-color);">${title}</div>
+                    <div style="color: rgba(255,255,255,0.7); font-size: 0.9rem; line-height: 1.8;">
+                        <div>🕐 ${time}</div>
+                        <div>🎯 水平: ${level}</div>
+                        <div>💰 费用: ${fee}</div>
+                        <div>📍 ${location}</div>
+                        <div>👤 组织者: ${organizer}</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('join-group-info').innerHTML = infoHtml;
+            document.getElementById('join-modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeJoinModal() {
+            document.getElementById('join-modal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function incrementGroupPeople(card) {
+            if (!card) return;
+
+            let valueSpan = null;
+            card.querySelectorAll('.info-row .value').forEach(span => {
+                if (!valueSpan && /^\d+\/\d+人?$/.test(span.textContent.trim())) {
+                    valueSpan = span;
+                }
+            });
+            if (!valueSpan) {
+                card.querySelectorAll('.info-row span').forEach(span => {
+                    if (!valueSpan && /^\d+\/\d+人?$/.test(span.textContent.trim())) {
+                        valueSpan = span;
+                    }
+                });
+            }
+            if (!valueSpan) return;
+
+            const currentText = valueSpan.textContent.trim();
+            const match = currentText.match(/^(\d+)\/(\d+)人?$/);
+            if (!match) return;
+
+            const currentCount = parseInt(match[1]);
+            const maxCount = parseInt(match[2]);
+            const newCount = currentCount + 1;
+
+            valueSpan.textContent = `${newCount}/${maxCount}人`;
+
+            const status = card.querySelector('.group-status');
+            if (status) {
+                if (newCount >= maxCount) {
+                    status.className = 'group-status status-full';
+                    status.textContent = '已满员';
+                } else {
+                    const missing = maxCount - newCount;
+                    status.className = 'group-status status-normal';
+                    if (missing === 1) {
+                        status.textContent = '缺1人';
+                    } else {
+                        status.textContent = `缺${missing}人`;
+                    }
+                }
+            }
+
+            if (newCount >= maxCount) {
+                removeFullGroups();
+            }
+        }
+
+        function submitJoin() {
+            const phoneInput = document.querySelector('#join-modal input[type="tel"]');
+            if (!phoneInput.value || phoneInput.value.length < 11) {
+                showToast('请输入正确的手机号码', 'error');
+                return;
+            }
+
+            const existingJoins = JSON.parse(localStorage.getItem('myGroupJoins') || '[]');
+            const alreadyJoined = existingJoins.some(j => j.title === currentJoinInfo.title);
+            if (alreadyJoined) {
+                closeJoinModal();
+                showToast('您已报名过此球局，每人每场只能报名一次', 'warning');
+                return;
+            }
+
+            const btn = document.querySelector('#join-modal .btn-primary');
+            btn.textContent = '报名中...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                const joinRecord = {
+                    joinId: 'YQJ' + Date.now().toString().slice(-10),
+                    title: currentJoinInfo.title,
+                    time: currentJoinInfo.time,
+                    level: currentJoinInfo.level,
+                    fee: currentJoinInfo.fee,
+                    location: currentJoinInfo.location,
+                    organizer: currentJoinInfo.organizer,
+                    phone: phoneInput.value,
+                    status: '待确认',
+                    createTime: Date.now()
+                };
+
+                const existingJoins = JSON.parse(localStorage.getItem('myGroupJoins') || '[]');
+                existingJoins.push(joinRecord);
+                localStorage.setItem('myGroupJoins', JSON.stringify(existingJoins));
+
+                if (currentJoinInfo.currentCard) {
+                    incrementGroupPeople(currentJoinInfo.currentCard);
+                    const joinBtn = currentJoinInfo.currentCard.querySelector('.join-btn');
+                    if (joinBtn) {
+                        joinBtn.textContent = '✓ 已报名';
+                        joinBtn.classList.add('joined');
+                        joinBtn.style.background = 'linear-gradient(135deg, #2ecc71, #27ae60)';
+                        joinBtn.style.cursor = 'default';
+                        joinBtn.onclick = function(e) {
+                            e.stopPropagation();
+                            showToast('您已报名过此球局', 'info');
+                        };
+                    }
+                }
+
+                closeJoinModal();
+                btn.textContent = '确认报名';
+                btn.disabled = false;
+                phoneInput.value = '';
+
+                showJoinSuccessModal(joinRecord);
+            }, 1500);
+        }
+
+        function showJoinSuccessModal(record) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.id = 'join-success-modal';
+            modal.style.zIndex = '2000';
+
+            modal.innerHTML = `
+                <div class="modal" style="max-width: 480px; text-align: center; padding: 35px 30px;">
+                    <div style="width: 80px; height: 80px; margin: 0 auto 20px; background: linear-gradient(135deg, #2ecc71, #27ae60); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; box-shadow: 0 0 30px rgba(46,204,113,0.5);">
+                        ✓
+                    </div>
+                    <h2 style="color: #2ecc71; font-size: 1.6rem; margin-bottom: 10px;">报名成功！</h2>
+                    <p style="color: rgba(255,255,255,0.7); font-size: 0.95rem; margin-bottom: 25px;">组织者会尽快与您联系，请保持手机畅通</p>
+
+                    <div style="background: rgba(255,255,255,0.05); border-radius: 15px; padding: 20px; margin-bottom: 20px; text-align: left;">
+                        <div style="color: #f9d423; font-size: 1.05rem; font-weight: bold; margin-bottom: 10px;">${record.title}</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.88rem; color: rgba(255,255,255,0.75);">
+                            <div>🕐 ${record.time}</div>
+                            <div>🎯 ${record.level}</div>
+                            <div>💰 ${record.fee}</div>
+                            <div>📍 ${record.location}</div>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(249, 212, 35, 0.1); border: 1px solid rgba(249, 212, 35, 0.3); border-radius: 10px; padding: 12px; margin-bottom: 20px; font-size: 0.85rem; color: #f9d423;">
+                        🎫 报名号：<b>${record.joinId}</b>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="closeJoinSuccessModal()" style="flex: 1; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #fff; font-size: 0.95rem; cursor: pointer;">关闭</button>
+                        <button onclick="viewMyJoinsFromSuccess()" style="flex: 1; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(135deg, #f9d423, #ff4e50); color: #fff; font-size: 0.95rem; font-weight: bold; cursor: pointer;">查看我的报名</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            document.body.style.overflow = 'hidden';
+
+            showToast('报名成功！', 'success');
+        }
+
+        function closeJoinSuccessModal() {
+            const modal = document.getElementById('join-success-modal');
+            if (modal) {
+                modal.remove();
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function viewMyJoinsFromSuccess() {
+            closeJoinSuccessModal();
+            showMyBallGamesModal();
+            setTimeout(() => switchMyTab('joins'), 100);
+        }
+
+        function showMyBallGamesModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.id = 'my-ballgames-modal';
+            modal.style.zIndex = '2000';
+
+            modal.innerHTML = `
+                <div class="modal" style="max-width: 550px; max-height: 85vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        📋 我的球局
+                        <div class="close-btn" onclick="closeMyBallGamesModal()">✕</div>
+                    </div>
+                    <div class="modal-body" style="padding: 0;">
+                        <div style="display: flex; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <div class="my-tab active" onclick="switchMyTab('joins')" id="tab-joins" style="flex: 1; text-align: center; padding: 15px; cursor: pointer; font-size: 0.95rem; color: rgba(255,255,255,0.6); border-bottom: 2px solid transparent; transition: all 0.3s;">
+                                📝 我报名的
+                            </div>
+                            <div class="my-tab" onclick="switchMyTab('created')" id="tab-created" style="flex: 1; text-align: center; padding: 15px; cursor: pointer; font-size: 0.95rem; color: rgba(255,255,255,0.6); border-bottom: 2px solid transparent; transition: all 0.3s;">
+                                🏸 我创建的
+                            </div>
+                        </div>
+                        <div id="my-tab-content" style="padding: 20px;">
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            document.body.style.overflow = 'hidden';
+
+            switchMyTab('joins');
+        }
+
+        function closeMyBallGamesModal() {
+            const modal = document.getElementById('my-ballgames-modal');
+            if (modal) {
+                modal.remove();
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function switchMyTab(tab) {
+            document.querySelectorAll('.my-tab').forEach(t => {
+                t.classList.remove('active');
+                t.style.color = 'rgba(255,255,255,0.6)';
+                t.style.borderBottomColor = 'transparent';
+            });
+            const activeTab = document.getElementById('tab-' + tab);
+            if (activeTab) {
+                activeTab.classList.add('active');
+                activeTab.style.color = '#f9d423';
+                activeTab.style.borderBottomColor = '#f9d423';
+            }
+
+            const content = document.getElementById('my-tab-content');
+            if (!content) return;
+
+            if (tab === 'joins') {
+                content.innerHTML = renderJoinsContent();
+            } else {
+                content.innerHTML = renderCreatedContent();
+            }
+        }
+
+        function renderJoinsContent() {
+            const joins = JSON.parse(localStorage.getItem('myGroupJoins') || '[]');
+
+            if (joins.length === 0) {
+                return `
+                    <div style="text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.5);">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">📝</div>
+                        <div>还没有报名记录</div>
+                        <div style="font-size: 0.85rem; margin-top: 8px;">去报名一个球局开始运动吧~</div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div style="margin-bottom: 15px; color: rgba(255,255,255,0.7); font-size: 0.9rem;">共 <b style="color: #f9d423;">${joins.length}</b> 条报名记录</div>
+                ${joins.map(j => `
+                    <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin-bottom: 12px; border-left: 3px solid ${j.status === '已确认' ? '#2ecc71' : '#f9d423'};">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                            <div style="color: #f9d423; font-weight: bold; font-size: 1rem;">${j.title}</div>
+                            <div style="background: ${j.status === '已确认' ? 'rgba(46,204,113,0.2)' : 'rgba(249,212,35,0.2)'}; color: ${j.status === '已确认' ? '#2ecc71' : '#f9d423'}; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem;">${j.status}</div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 0.85rem; color: rgba(255,255,255,0.75);">
+                            <div>🕐 ${j.time}</div>
+                            <div>🎯 ${j.level}</div>
+                            <div>💰 ${j.fee}</div>
+                            <div>📍 ${j.location}</div>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 0.75rem; color: #888;">报名号：${j.joinId}</div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function renderCreatedContent() {
+            const groups = JSON.parse(localStorage.getItem('myCreatedGroups') || '[]');
+
+            if (groups.length === 0) {
+                return `
+                    <div style="text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.5);">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">🏸</div>
+                        <div>还没有创建球局</div>
+                        <div style="font-size: 0.85rem; margin-top: 8px;">点击"创建球局"组织自己的球局吧~</div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div style="margin-bottom: 15px; color: rgba(255,255,255,0.7); font-size: 0.9rem;">共创建了 <b style="color: #f9d423;">${groups.length}</b> 个球局</div>
+                ${groups.map(g => `
+                    <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin-bottom: 12px; border-left: 3px solid #f9d423;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                            <div style="color: #f9d423; font-weight: bold; font-size: 1rem;">${g.title}</div>
+                            <div style="background: rgba(46,204,113,0.2); color: #2ecc71; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem;">${g.status}</div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 0.85rem; color: rgba(255,255,255,0.75);">
+                            <div>🕐 ${g.timeDisplay}</div>
+                            <div>🎯 ${g.level}</div>
+                            <div>💰 ${g.fee}</div>
+                            <div>👥 ${g.people}</div>
+                        </div>
+                        <div style="margin-top: 8px; display: flex; gap: 8px;">
+                            <button onclick="viewMyCreatedGroup('${g.groupId}'); closeMyBallGamesModal();" style="flex: 1; padding: 8px; border-radius: 8px; border: none; background: linear-gradient(135deg, #f9d423, #ff4e50); color: #fff; font-size: 0.85rem; cursor: pointer;">查看详情</button>
+                            <button onclick="deleteMyGroupFromModal('${g.groupId}')" style="padding: 8px 15px; border-radius: 8px; border: 1px solid rgba(231,76,60,0.5); background: rgba(231,76,60,0.1); color: #e74c3c; font-size: 0.85rem; cursor: pointer;">取消</button>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function deleteMyGroupFromModal(groupId) {
+            if (!confirm('确定要取消这个球局吗？')) return;
+            
+            let myGroups = JSON.parse(localStorage.getItem('myCreatedGroups') || '[]');
+            myGroups = myGroups.filter(g => g.groupId !== groupId);
+            localStorage.setItem('myCreatedGroups', JSON.stringify(myGroups));
+            
+            const cards = document.querySelectorAll('.group-card[data-mine="true"]');
+            cards.forEach(card => {
+                const title = card.querySelector('.group-title')?.textContent;
+                if (!myGroups.find(g => g.title === title)) {
+                    card.remove();
+                }
+            });
+            
+            switchMyTab('created');
+            showToast('球局已取消', 'success');
+        }
+        
+        function showToast(message, type) {
+            if (!type) type = 'success';
+            const colors = {
+                success: 'rgba(46, 204, 113, 0.95)',
+                error: 'rgba(231, 76, 60, 0.95)',
+                info: 'rgba(96, 165, 250, 0.95)',
+                warning: 'rgba(251, 191, 36, 0.95)'
+            };
+            const icons = {
+                success: '✅',
+                error: '❌',
+                info: 'ℹ️',
+                warning: '⚠️'
+            };
+            
+            const toast = document.createElement('div');
+            toast.style.cssText = `position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: ${colors[type]}; color: #fff; padding: 12px 24px; border-radius: 25px; z-index: 99999; font-size: 0.95rem; animation: slideDown 0.3s ease;`;
+            toast.textContent = icons[type] + ' ' + message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideUp 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+        
+        function submitCreate() {
+            const modal = document.getElementById('create-modal');
+            const nameInput = modal.querySelector('input[type="text"]');
+            const dateInput = modal.querySelector('input[type="date"]');
+            const timeInput = modal.querySelector('input[type="time"]');
+            const allSelects = modal.querySelectorAll('select');
+            const durationSelect = allSelects[0];
+            const peopleSelect = allSelects[1];
+            const levelSelect = allSelects[2];
+            const locationSelect = allSelects[3];
+            const feeInput = modal.querySelector('input[type="number"]');
+            const peopleInput = null;
+            const descTextarea = modal.querySelector('textarea');
+            
+            if (!nameInput.value.trim()) {
+                showToast('请输入球局名称', 'error');
+                return;
+            }
+            if (!dateInput.value) {
+                showToast('请选择日期', 'error');
+                return;
+            }
+            if (!timeInput.value) {
+                showToast('请选择时间', 'error');
+                return;
+            }
+            
+            const btn = modal.querySelector('.btn-primary');
+            btn.textContent = '创建中...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                const dateObj = new Date(dateInput.value);
+                const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                const month = dateObj.getMonth() + 1;
+                const day = dateObj.getDate();
+                const weekDay = weekDays[dateObj.getDay()];
+                const timeStr = timeInput.value;
+                
+                const durationText = durationSelect.value;
+                const durationHours = parseFloat(durationText);
+                const endHour = parseInt(timeStr.split(':')[0]) + Math.floor(durationHours);
+                const endMinute = parseInt(timeStr.split(':')[1]) + Math.round((durationHours % 1) * 60);
+                let finalEndHour = endHour;
+                let finalEndMinute = endMinute;
+                if (finalEndMinute >= 60) {
+                    finalEndHour += 1;
+                    finalEndMinute -= 60;
+                }
+                const endTime = String(finalEndHour).padStart(2, '0') + ':' + String(finalEndMinute).padStart(2, '0');
+
+                const peopleText = peopleSelect.value;
+                const peopleNum = parseInt(peopleText);
+
+                const groupRecord = {
+                    groupId: 'YG' + Date.now().toString().slice(-10),
+                    title: nameInput.value.trim(),
+                    date: dateInput.value,
+                    dateDisplay: `${month}月${day}日 周${weekDay}`,
+                    time: `${timeStr}-${endTime}`,
+                    timeDisplay: `${month}月${day}日 周${weekDay} ${timeStr}-${endTime}`,
+                    level: levelSelect.value,
+                    location: locationSelect ? locationSelect.value : '待补充',
+                    fee: feeInput && feeInput.value ? `AA 约${feeInput.value}元` : 'AA',
+                    people: `1/${peopleNum}人`,
+                    maxPeople: peopleNum,
+                    duration: durationText,
+                    description: descTextarea ? descTextarea.value : '',
+                    organizer: '我',
+                    isMine: true,
+                    status: '招募中',
+                    createTime: Date.now()
+                };
+                
+                const existingGroups = JSON.parse(localStorage.getItem('myCreatedGroups') || '[]');
+                existingGroups.unshift(groupRecord);
+                localStorage.setItem('myCreatedGroups', JSON.stringify(existingGroups));
+                
+                addCreatedGroupToList(groupRecord);
+                
+                closeCreateModal();
+                btn.textContent = '创建球局';
+                btn.disabled = false;
+                
+                nameInput.value = '';
+                dateInput.value = '';
+                timeInput.value = '';
+                if (feeInput) feeInput.value = '';
+                if (peopleInput) peopleInput.value = '';
+                if (descTextarea) descTextarea.value = '';
+                
+                showToast('球局创建成功！已添加到列表顶部', 'success');
+            }, 1500);
+        }
+
+        function addCreatedGroupToList(group) {
+            const grid = document.querySelector('.group-grid');
+            if (!grid) return;
+            
+            const card = document.createElement('div');
+            card.className = 'group-card';
+            card.dataset.city = 'beijing';
+            card.dataset.level = group.level;
+            card.dataset.mine = 'true';
+            
+            card.innerHTML = `
+                <div class="group-badge">我创建的</div>
+                <div class="group-title">${group.title}</div>
+                <div class="group-meta">
+                    <div class="info-row">
+                        <span class="label">🏸 水平</span>
+                        <span class="value">${group.level}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">🕐 时间</span>
+                        <span>${group.timeDisplay}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">💰 费用</span>
+                        <span class="value">${group.fee}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">👥 人数</span>
+                        <span class="value">${group.people}</span>
+                    </div>
+                </div>
+                <div class="group-location">
+                    <span class="location-icon">📍</span>
+                    <span class="location-name">${group.location}</span>
+                </div>
+                <div class="group-footer">
+                    <div class="organizer">
+                        <div class="organizer-avatar">我</div>
+                        <span class="organizer-name">${group.organizer}</span>
+                    </div>
+                    <button class="join-btn" onclick="viewMyCreatedGroup('${group.groupId}')" style="background: linear-gradient(135deg, #f9d423, #ff4e50);">查看详情</button>
+                </div>
+            `;
+            
+            grid.insertBefore(card, grid.firstChild);
+        }
+
+        function loadMyCreatedGroups() {
+            const myGroups = JSON.parse(localStorage.getItem('myCreatedGroups') || '[]');
+            myGroups.forEach(group => {
+                addCreatedGroupToList(group);
+            });
+        }
+
+        function viewMyCreatedGroup(groupId) {
+            try {
+                const myGroups = JSON.parse(localStorage.getItem('myCreatedGroups') || '[]');
+                const group = myGroups.find(g => g.groupId === groupId);
+                if (!group) {
+                    showToast('未找到球局信息', 'error');
+                    return;
+                }
+                showMyCreatedDetailModal(group);
+            } catch (e) {
+                showToast('查看详情失败：' + e.message, 'error');
+            }
+        }
+
+        function showMyCreatedDetailModal(group) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.id = 'my-group-detail-modal';
+            modal.style.zIndex = '2000';
+
+            modal.innerHTML = `
+                <div class="modal" style="max-width: 500px;">
+                    <div class="modal-header">
+                        🏸 我创建的球局
+                        <div class="close-btn" onclick="document.getElementById('my-group-detail-modal').remove(); document.body.style.overflow='auto';">✕</div>
+                    </div>
+                    <div class="modal-body" style="padding: 20px;">
+                        <div style="background: linear-gradient(135deg, rgba(249, 212, 35, 0.15), rgba(255, 78, 80, 0.15)); border-radius: 15px; padding: 20px; margin-bottom: 15px; border: 1px solid rgba(249, 212, 35, 0.3);">
+                            <div style="color: #f9d423; font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;">${group.title}</div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <span style="background: rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem;">${group.status}</span>
+                                <span style="color: rgba(255,255,255,0.6); font-size: 0.8rem;">编号: ${group.groupId}</span>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px;">
+                                <div style="color: #888; font-size: 0.8rem; margin-bottom: 4px;">🕐 时间</div>
+                                <div style="color: #fff;">${group.timeDisplay}</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px;">
+                                <div style="color: #888; font-size: 0.8rem; margin-bottom: 4px;">🎯 水平</div>
+                                <div style="color: #fff;">${group.level}</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px;">
+                                <div style="color: #888; font-size: 0.8rem; margin-bottom: 4px;">💰 费用</div>
+                                <div style="color: #fff;">${group.fee}</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px;">
+                                <div style="color: #888; font-size: 0.8rem; margin-bottom: 4px;">👥 人数</div>
+                                <div style="color: #fff;">${group.people}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 15px;">
+                            <div style="color: #888; font-size: 0.8rem; margin-bottom: 4px;">📍 地点</div>
+                            <div style="color: #fff;">${group.location}</div>
+                        </div>
+                        
+                        ${group.description ? `
+                        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 15px;">
+                            <div style="color: #888; font-size: 0.8rem; margin-bottom: 4px;">📝 球局说明</div>
+                            <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem; line-height: 1.6;">${group.description}</div>
+                        </div>
+                        ` : ''}
+                        
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="deleteMyGroup('${group.groupId}')" style="flex: 1; padding: 12px; border-radius: 12px; border: 1px solid rgba(231, 76, 60, 0.5); background: rgba(231, 76, 60, 0.1); color: #e74c3c; font-size: 0.95rem; cursor: pointer;">取消球局</button>
+                            <button onclick="document.getElementById('my-group-detail-modal').remove(); document.body.style.overflow='auto';" style="flex: 1; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(135deg, #f9d423, #ff4e50); color: #fff; font-size: 0.95rem; font-weight: bold; cursor: pointer;">关闭</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function deleteMyGroup(groupId) {
+            if (!confirm('确定要取消这个球局吗？')) return;
+            
+            let myGroups = JSON.parse(localStorage.getItem('myCreatedGroups') || '[]');
+            myGroups = myGroups.filter(g => g.groupId !== groupId);
+            localStorage.setItem('myCreatedGroups', JSON.stringify(myGroups));
+            
+            const detailModal = document.getElementById('my-group-detail-modal');
+            if (detailModal) {
+                detailModal.remove();
+                document.body.style.overflow = 'auto';
+            }
+            
+            const cards = document.querySelectorAll('.group-card[data-mine="true"]');
+            cards.forEach(card => {
+                const title = card.querySelector('.group-title')?.textContent;
+                const myGroupsNew = JSON.parse(localStorage.getItem('myCreatedGroups') || '[]');
+                if (!myGroupsNew.find(g => g.title === title)) {
+                    card.remove();
+                }
+            });
+            
+            showToast('球局已取消', 'success');
+        }
+        const cityDistrictMap = {
+            'beijing': ['海淀区', '朝阳区', '西城区', '东城区', '丰台区', '通州区', '顺义区', '昌平区'],
+            'shanghai': ['浦东新区', '徐汇区', '黄浦区', '静安区', '长宁区', '普陀区', '闵行区', '杨浦区'],
+            'shenzhen': ['南山区', '福田区', '罗湖区', '宝安区', '龙岗区', '龙华区', '光明区', '坪山区'],
+            'guangzhou': ['天河区', '越秀区', '海珠区', '白云区', '番禺区', '黄埔区', '花都区', '南沙区'],
+            'chengdu': ['锦江区', '青羊区', '武侯区', '成华区', '金牛区', '高新区', '双流区', '郫都区'],
+            'hangzhou': ['西湖区', '拱墅区', '江干区', '滨江区', '余杭区', '萧山区', '富阳区', '临安区'],
+            'wuhan': ['武昌区', '汉口区', '汉阳区', '洪山区', '青山区', '江岸区', '江汉区', '硚口区'],
+            'nanjing': ['建邺区', '玄武区', '鼓楼区', '秦淮区', '栖霞区', '雨花台区', '江宁区', '浦口区']
+        };
+
+        let currentCity = 'all';
+
+        function switchCity(city) {
+            document.querySelectorAll('.city-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            currentCity = city;
+            
+            updateDistrictSelect(city);
+            filterGroups();
+        }
+
+        function updateDistrictSelect(city) {
+            const districtSelect = document.getElementById('district-select');
+            
+            if (city === 'all') {
+                districtSelect.innerHTML = '<option value="">全部区域</option>';
+                const allDistricts = [];
+                Object.values(cityDistrictMap).forEach(districts => {
+                    districts.forEach(district => {
+                        if (!allDistricts.includes(district)) {
+                            allDistricts.push(district);
+                        }
+                    });
+                });
+                allDistricts.sort();
+                allDistricts.forEach(district => {
+                    const option = document.createElement('option');
+                    option.value = district;
+                    option.textContent = district;
+                    districtSelect.appendChild(option);
+                });
+            } else {
+                const districts = cityDistrictMap[city] || [];
+                districtSelect.innerHTML = '<option value="">全部区域</option>';
+                districts.forEach(district => {
+                    const option = document.createElement('option');
+                    option.value = district;
+                    option.textContent = district;
+                    districtSelect.appendChild(option);
+                });
+            }
+        }
+
+        function filterByDistrict() {
+            filterGroups();
+        }
+
+        function filterGroups() {
+            const district = document.getElementById('district-select').value;
+            const level = document.getElementById('level-select').value;
+            const time = document.getElementById('time-select').value;
+            const groups = document.querySelectorAll('.group-card');
+            let count = 0;
+            
+            groups.forEach(group => {
+                const groupCity = group.dataset.city;
+                const groupDistrict = group.dataset.district || '';
+                const groupLevel = group.dataset.level || '';
+                const groupDay = group.dataset.day || '';
+                
+                let show = true;
+                
+                if (currentCity !== 'all' && groupCity !== currentCity) {
+                    show = false;
+                }
+                
+                if (show && district && groupDistrict !== district) {
+                    show = false;
+                }
+                
+                if (show && level && groupLevel !== level) {
+                    show = false;
+                }
+                
+                if (show && time && groupDay !== time) {
+                    show = false;
+                }
+                
+                if (show) {
+                    group.style.display = 'block';
+                    count++;
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+            
+            let emptyTip = document.getElementById('empty-tip');
+            if (count === 0) {
+                if (!emptyTip) {
+                    emptyTip = document.createElement('div');
+                    emptyTip.id = 'empty-tip';
+                    emptyTip.style.cssText = 'grid-column: 1/-1; text-align: center; padding: 60px 20px; color: rgba(255,255,255,0.5);';
+                    emptyTip.innerHTML = '<div style="font-size: 3rem; margin-bottom: 15px;">🏸</div><div style="font-size: 1.1rem; margin-bottom: 8px;">暂无符合条件的球局</div><div style="font-size: 0.9rem;">试试调整筛选条件吧~</div>';
+                    document.getElementById('group-grid').appendChild(emptyTip);
+                }
+                emptyTip.style.display = 'block';
+            } else if (emptyTip) {
+                emptyTip.style.display = 'none';
+            }
+            
+            document.querySelector('.sort-bar span:first-child').textContent = '共找到 ' + count + ' 个球局';
+        }
+        function extractGroupData(card) {
+            const timeEl = card.querySelectorAll('.info-row')[0]?.querySelectorAll('span')[1];
+            const peopleEl = card.querySelector('.info-row:nth-child(3) .value');
+            const feeEl = card.querySelector('.info-row:nth-child(4) .value');
+            const statusEl = card.querySelector('.group-status');
+            const levelEl = card.querySelector('.info-row:nth-child(2) .value');
+
+            const timeText = timeEl ? timeEl.textContent : '';
+            const peopleText = peopleEl ? peopleEl.textContent : '0/0';
+            const feeText = feeEl ? feeEl.textContent : '0';
+            const statusText = statusEl ? statusEl.textContent : '';
+            const levelText = levelEl ? levelEl.textContent : '';
+
+            const dayMatch = timeText.match(/本周(.)|周(.)|(\d+)月(\d+)日/);
+            const dayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 7, '天': 7 };
+            let dayScore = 8;
+            if (dayMatch) {
+                const d = dayMatch[1] || dayMatch[2];
+                if (d && dayMap[d] !== undefined) dayScore = dayMap[d];
+            }
+
+            const timeMatch = timeText.match(/(\d+):(\d+)/);
+            let timeScore = 24;
+            if (timeMatch) {
+                timeScore = parseInt(timeMatch[1]) + parseInt(timeMatch[2]) / 60;
+            }
+
+            const peopleMatch = peopleText.match(/(\d+)\/(\d+)/);
+            const currentPeople = peopleMatch ? parseInt(peopleMatch[1]) : 0;
+            const maxPeople = peopleMatch ? parseInt(peopleMatch[2]) : 0;
+            const hotScore = maxPeople > 0 ? currentPeople / maxPeople : 0;
+            const isHot = statusText.indexOf('火热') > -1 || statusText.indexOf('缺') > -1;
+
+            const feeMatch = feeText.match(/\d+/);
+            const fee = feeMatch ? parseInt(feeMatch[0]) : 0;
+
+            const levelScore = { '新手入门': 1, '业余初级': 2, '业余中级': 3, '业余高级': 4, '专业水平': 5 };
+            const level = levelScore[levelText] || 3;
+
+            const isMine = card.dataset.mine === 'true';
+
+            return {
+                dayScore,
+                timeScore,
+                hotScore,
+                isHot,
+                fee,
+                level,
+                isMine,
+                currentPeople,
+                maxPeople
+            };
+        }
+
+        function sortGroups(type, targetEl) {
+            document.querySelectorAll('.sort-option').forEach(opt => opt.classList.remove('active'));
+            if (targetEl && targetEl.classList) {
+                targetEl.classList.add('active');
+            } else {
+                const matched = document.querySelector('.sort-option[onclick*="' + type + '"]');
+                if (matched) matched.classList.add('active');
+            }
+
+            const grid = document.querySelector('.group-grid');
+            const cards = Array.from(document.querySelectorAll('.group-card'));
+            const visibleCards = cards.filter(c => c.style.display !== 'none');
+
+            visibleCards.sort((a, b) => {
+                const da = extractGroupData(a);
+                const db = extractGroupData(b);
+
+                if (da.isMine !== db.isMine) return da.isMine ? -1 : 1;
+
+                switch (type) {
+                    case 'time':
+                        if (da.dayScore !== db.dayScore) return da.dayScore - db.dayScore;
+                        return da.timeScore - db.timeScore;
+                    case 'match':
+                        return Math.abs(da.level - 3) - Math.abs(db.level - 3);
+                    case 'hot':
+                        if (da.isHot !== db.isHot) return da.isHot ? -1 : 1;
+                        return db.hotScore - da.hotScore;
+                    default:
+                        return 0;
+                }
+            });
+
+            visibleCards.forEach(card => grid.appendChild(card));
+
+            const labels = { time: '时间最近', match: '匹配度', hot: '最热门' };
+            showToast('已按' + (labels[type] || type) + '排序', 'info');
+        }
+        
+        window.onload = function() {
+            updateDistrictSelect('all');
+            filterGroups();
+            loadMyCreatedGroups();
+            updateGroupTimes();
+            markJoinedGroups();
+
+            document.querySelectorAll('.group-card').forEach(card => {
+                if (!card.onclick) {
+                    card.addEventListener('click', function(e) {
+                        if (e.target.closest('.join-btn')) return;
+                        openGroupDetail(this, e);
+                    });
+                }
+            });
+
+            document.querySelectorAll('.join-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            });
+        };
+
+        const weekDayMap = { '日': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6 };
+        const weekDayNames = ['日', '一', '二', '三', '四', '五', '六'];
+
+        function formatGroupDate(date) {
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const weekDay = weekDayNames[date.getDay()];
+            return `${month}月${day}日 周${weekDay}`;
+        }
+
+        function markJoinedGroups() {
+            const existingJoins = JSON.parse(localStorage.getItem('myGroupJoins') || '[]');
+            const joinedTitles = existingJoins.map(j => j.title);
+
+            document.querySelectorAll('.group-card').forEach(card => {
+                const title = card.querySelector('.group-title');
+                if (!title) return;
+
+                if (joinedTitles.includes(title.textContent.trim())) {
+                    const joinBtn = card.querySelector('.join-btn');
+                    if (joinBtn) {
+                        joinBtn.textContent = '✓ 已报名';
+                        joinBtn.classList.add('joined');
+                        joinBtn.style.background = 'linear-gradient(135deg, #2ecc71, #27ae60)';
+                        joinBtn.style.cursor = 'default';
+                        joinBtn.onclick = function(e) {
+                            e.stopPropagation();
+                            showToast('您已报名过此球局', 'info');
+                        };
+                    }
+                }
+            });
+        }
+
+        function removeFullGroups() {
+            const fullCards = document.querySelectorAll('.group-card');
+            fullCards.forEach(card => {
+                const status = card.querySelector('.group-status');
+                if (status && status.textContent.trim() === '已满员') {
+                    const newCard = card.cloneNode(true);
+                    newCard.removeAttribute('data-original-time');
+
+                    const newStatus = newCard.querySelector('.group-status');
+                    if (newStatus) {
+                        newStatus.className = 'group-status status-normal';
+                        newStatus.textContent = '缺3人';
+                    }
+
+                    const newValueSpans = newCard.querySelectorAll('.info-row .value');
+                    newValueSpans.forEach(span => {
+                        if (/^\d+\/\d+人?$/.test(span.textContent.trim())) {
+                            const m = span.textContent.trim().match(/^(\d+)\/(\d+)人?$/);
+                            if (m) {
+                                span.textContent = `3/${m[2]}人`;
+                            }
+                        }
+                    });
+
+                    const joinBtn = newCard.querySelector('.join-btn');
+                    if (joinBtn) {
+                        joinBtn.classList.remove('disabled');
+                        joinBtn.textContent = '立即报名';
+                        joinBtn.setAttribute('onclick', 'openJoinModal(this)');
+                    }
+
+                    const originalTime = card.getAttribute('data-original-time');
+                    if (originalTime) {
+                        const timeSpan = (() => {
+                            let result = null;
+                            newCard.querySelectorAll('.info-row span').forEach(span => {
+                                if (!result && /^本周[一二三四五六日]/.test(span.textContent.trim())) {
+                                    result = span;
+                                }
+                            });
+                            return result;
+                        })();
+                        if (timeSpan) {
+                            timeSpan.textContent = originalTime;
+                        }
+                        newCard.setAttribute('data-original-time', originalTime);
+                    }
+
+                    card.parentNode.replaceChild(newCard, card);
+                }
+            });
+        }
+
+        function updateGroupTimes() {
+            removeFullGroups();
+
+            const now = new Date();
+            const todayDay = now.getDay();
+
+            document.querySelectorAll('.group-card').forEach(card => {
+                let timeSpan = null;
+                card.querySelectorAll('.info-row span').forEach(span => {
+                    const text = span.textContent.trim();
+                    if (/^本周[一二三四五六日]/.test(text) && !timeSpan) {
+                        timeSpan = span;
+                    }
+                });
+                if (!timeSpan) return;
+
+                if (!card.getAttribute('data-original-time')) {
+                    card.setAttribute('data-original-time', timeSpan.textContent.trim());
+                }
+                const originalText = card.getAttribute('data-original-time');
+
+                const match = originalText.match(/^本周([一二三四五六日])\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/);
+                if (!match) return;
+
+                const targetDay = weekDayMap[match[1]];
+                const startTime = match[2];
+                const endTime = match[3];
+                const [startH, startM] = startTime.split(':').map(Number);
+
+                let daysOffset = targetDay - todayDay;
+                if (daysOffset < 0) daysOffset += 7;
+
+                const groupDate = new Date(now);
+                groupDate.setDate(groupDate.getDate() + daysOffset);
+                groupDate.setHours(startH, startM, 0, 0);
+
+                if (groupDate.getTime() <= now.getTime()) {
+                    daysOffset += 7;
+                    groupDate.setDate(groupDate.getDate() + 7);
+                    const newOriginal = `本周${match[1]} ${startTime}-${endTime}`;
+                    card.setAttribute('data-original-time', newOriginal);
+                }
+
+                const dateText = formatGroupDate(groupDate);
+                timeSpan.textContent = `${dateText} ${startTime}-${endTime}`;
+            });
+        }
+    </script>
+</body>
+</html>
