@@ -1,0 +1,3685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>约球星球 - 球馆</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .city-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .city-tab {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--dark-border);
+            border-radius: 20px;
+            padding: 8px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+        
+        .city-tab.active,
+        .city-tab:hover {
+            background: rgba(249,212,35,0.2);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .city-tab.hot {
+            position: relative;
+        }
+        
+        .city-tab.hot::after {
+            content: '🔥';
+            margin-left: 5px;
+        }
+        
+        .search-bar {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--dark-border);
+            border-radius: 25px;
+            padding: 12px 20px;
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .search-bar input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+        }
+        
+        .search-bar input::placeholder {
+            color: #888;
+        }
+        
+        .search-bar button {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #000;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .search-bar button:hover {
+            transform: scale(1.05);
+        }
+        
+        .location-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            color: #aaa;
+            font-size: 0.95rem;
+        }
+        
+        .location-bar .change-location {
+            color: var(--info-color);
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .modal select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+        }
+        
+        .modal select option {
+            background: #1a1a2e;
+            color: #fff;
+            padding: 8px;
+        }
+        
+        .location-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            color: var(--primary-color);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+        
+        .location-btn:hover {
+            background: rgba(249,212,35,0.2);
+            border-color: var(--primary-color);
+        }
+        
+        .location-btn.loading {
+            color: #888;
+            pointer-events: none;
+        }
+        
+        .location-icon {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-tag {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--dark-border);
+            border-radius: 20px;
+            padding: 8px 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+        
+        .filter-tag.active,
+        .filter-tag:hover {
+            background: rgba(96,165,250,0.2);
+            border-color: var(--info-color);
+            color: var(--info-color);
+        }
+        
+        .sort-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+        
+        .sort-options {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .sort-option {
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .sort-option.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .court-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+        
+        .court-card {
+            background: var(--dark-card);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--dark-border);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .court-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .court-image {
+            height: 200px;
+            background: linear-gradient(135deg, #2c3e50, #4a69bd);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .court-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(249,212,35,0.1) 0%, transparent 50%);
+        }
+        
+        .court-image .court-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: var(--primary-color);
+            color: #000;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .court-image .distance {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .court-info {
+            padding: 20px;
+        }
+        
+        .court-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .court-name {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .court-rating {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        
+        .court-location {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        
+        .court-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .court-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid var(--dark-border);
+        }
+        
+        .price-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .price {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .price-unit {
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .book-btn {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #000;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .book-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(249,212,35,0.4);
+        }
+        
+        .modal-header {
+            height: 250px;
+            background: linear-gradient(135deg, #2c3e50, #4a69bd);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 6rem;
+            position: relative;
+        }
+        
+        .modal-header .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            z-index: 10;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .modal-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .modal-title h2 {
+            font-size: 1.6rem;
+            color: var(--primary-color);
+        }
+        
+        .modal-location {
+            color: #888;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .modal-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .modal-section {
+            margin-bottom: 25px;
+        }
+        
+        .modal-section h3 {
+            color: var(--info-color);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .modal-section p {
+            color: #ddd;
+            line-height: 1.7;
+            margin-bottom: 10px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .info-item {
+            background: var(--dark-card);
+            border-radius: 12px;
+            padding: 15px;
+        }
+        
+        .info-item .label {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        
+        .info-item .value {
+            font-size: 1rem;
+            color: #fff;
+            font-weight: 500;
+        }
+        
+        .rating-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        
+        .rating-item {
+            background: var(--dark-card);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .rating-item .score {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .rating-item .label {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .review-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .review-item {
+            background: var(--dark-card);
+            border-radius: 12px;
+            padding: 18px;
+        }
+        
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .review-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            font-weight: bold;
+        }
+        
+        .user-info .name {
+            color: #fff;
+            font-weight: 500;
+        }
+        
+        .user-info .level {
+            font-size: 0.8rem;
+            color: var(--info-color);
+        }
+        
+        .review-content {
+            color: #ddd;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .review-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .review-tag {
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 10px;
+            background: rgba(96,165,250,0.2);
+            color: var(--info-color);
+        }
+        
+        .btn-book {
+            width: 100%;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 16px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #000;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn-book:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(249,212,35,0.4);
+        }
+        
+        @media (max-width: 768px) {
+            .court-grid {
+                grid-template-columns: 1fr;
+            }
+            .rating-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .duration-btn.active {
+            background: linear-gradient(135deg, #f9d423, #ff4e50) !important;
+            border-color: transparent !important;
+        }
+
+        @keyframes toastSlideDown {
+            from {
+                transform: translateX(-50%) translateY(-30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes toastSlideUp {
+            from {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(-50%) translateY(-30px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <div class="logo">🏸 约球星球</div>
+        <div class="nav-links">
+            <a href="yueqiuxingqiu.html">首页</a>
+            <a href="yueqiu-group.html">找球局</a>
+            <a href="yueqiu-court.html" class="active">球馆</a>
+            <a href="javascript:void(0)" onclick="showMyBookingsModal()">📋 我的预约</a>
+            <a href="yueqiu-add-court.html">➕ 添加球馆</a>
+            <a href="yueqiu-profile.html">我的</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="city-tabs">
+            <div class="city-tab active hot" data-city="all" onclick="switchCity('all', this)">全部</div>
+            <div class="city-tab hot" data-city="beijing" onclick="switchCity('beijing', this)">北京</div>
+            <div class="city-tab hot" data-city="shanghai" onclick="switchCity('shanghai', this)">上海</div>
+            <div class="city-tab hot" data-city="shenzhen" onclick="switchCity('shenzhen', this)">深圳</div>
+            <div class="city-tab" data-city="guangzhou" onclick="switchCity('guangzhou', this)">广州</div>
+            <div class="city-tab" data-city="chengdu" onclick="switchCity('chengdu', this)">成都</div>
+            <div class="city-tab" data-city="hangzhou" onclick="switchCity('hangzhou', this)">杭州</div>
+            <div class="city-tab" data-city="wuhan" onclick="switchCity('wuhan', this)">武汉</div>
+            <div class="city-tab" data-city="nanjing" onclick="switchCity('nanjing', this)">南京</div>
+            <div class="city-tab" data-city="xian" onclick="switchCity('xian', this)">西安</div>
+            <div class="city-tab" data-city="chongqing" onclick="switchCity('chongqing', this)">重庆</div>
+            <div class="city-tab" data-city="tianjin" onclick="switchCity('tianjin', this)">天津</div>
+            <div class="city-tab" data-city="suzhou" onclick="switchCity('suzhou', this)">苏州</div>
+            <div class="city-tab" data-city="qingdao" onclick="switchCity('qingdao', this)">青岛</div>
+            <div class="city-tab" data-city="changsha" onclick="switchCity('changsha', this)">长沙</div>
+            <div class="city-tab" data-city="zhengzhou" onclick="switchCity('zhengzhou', this)">郑州</div>
+            <div class="city-tab" data-city="dongguan" onclick="switchCity('dongguan', this)">东莞</div>
+            <div class="city-tab" data-city="fuzhou" onclick="switchCity('fuzhou', this)">福州</div>
+            <div class="city-tab" data-city="xiamen" onclick="switchCity('xiamen', this)">厦门</div>
+        </div>
+
+        <div class="location-bar">
+            <button class="location-btn" onclick="getCurrentLocation()">
+                <span class="location-icon">📍</span>
+                <span>获取位置</span>
+            </button>
+            <span id="location-display">全国 · 全部地区</span>
+            <span class="change-location" onclick="openAreaModal()">[切换区域]</span>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" placeholder="搜索球馆名称、地址或地铁站...">
+            <button>搜索</button>
+        </div>
+
+        <div class="filter-row">
+            <div class="filter-tag active" data-type="all" onclick="filterCourts('all', this)">全部</div>
+            <div class="filter-tag" data-type="recommend" onclick="filterCourts('recommend', this)">推荐</div>
+            <div class="filter-tag" data-type="cheap" onclick="filterCourts('cheap', this)">性价比</div>
+            <div class="filter-tag" data-type="vip" onclick="filterCourts('vip', this)">高端</div>
+            <div class="filter-tag" data-type="indoor" onclick="filterCourts('indoor', this)">室内馆</div>
+            <div class="filter-tag" data-type="near" onclick="filterCourts('near', this)">地铁站附近</div>
+        </div>
+
+        <div class="sort-bar">
+            <span>共找到 128 家球馆</span>
+            <div class="sort-options">
+                <span class="sort-option active" data-type="recommend" onclick="sortCourts('recommend', this)">推荐排序</span>
+                <span class="sort-option" data-type="price" onclick="sortCourts('price', this)">价格最低</span>
+                <span class="sort-option" data-type="rating" onclick="sortCourts('rating', this)">评分最高</span>
+                <span class="sort-option" data-type="distance" onclick="sortCourts('distance', this)">距离最近</span>
+            </div>
+        </div>
+
+        <div class="court-grid" id="court-grid">
+            <div class="court-card" data-city="beijing" data-district="海淀区" onclick="openCourtDetail('shouti')">
+                <div class="court-image">
+                    🏟️
+                    <span class="court-badge">热门推荐</span>
+                    <span class="distance">2.3km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">首体网球羽毛球健身中心</div>
+                        <div class="court-rating">⭐ 4.8</div>
+                    </div>
+                    <div class="court-location">📍 海淀区中关村南大街54号首都体育馆内</div>
+                    <div class="court-tags">
+                        <span class="tag good">专业地胶</span>
+                        <span class="tag good">灯光充足</span>
+                        <span class="tag good">有淋浴</span>
+                        <span class="tag info">42片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥80</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="beijing" data-district="朝阳区" onclick="openCourtDetail('aoti')">
+                <div class="court-image">
+                    🏆
+                    <span class="court-badge">高端优选</span>
+                    <span class="distance">4.8km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">奥体中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.9</div>
+                    </div>
+                    <div class="court-location">📍 朝阳区国家奥林匹克体育中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">赛事级场地</span>
+                        <span class="tag good">空调恒温</span>
+                        <span class="tag good">免费停车</span>
+                        <span class="tag info">20片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥120</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="beijing" data-district="朝阳区" onclick="openCourtDetail('chaoyang')">
+                <div class="court-image">
+                    🌆
+                    <span class="distance">3.1km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">朝阳体育馆羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.6</div>
+                    </div>
+                    <div class="court-location">📍 朝阳区姚家园路10号朝阳体育馆内</div>
+                    <div class="court-tags">
+                        <span class="tag good">交通便利</span>
+                        <span class="tag good">性价比高</span>
+                        <span class="tag warning">周末人多</span>
+                        <span class="tag info">12片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥60</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="shanghai" data-district="浦东新区" onclick="openCourtDetail('shanghai1')">
+                <div class="court-image">
+                    🏙️
+                    <span class="court-badge">热门推荐</span>
+                    <span class="distance">3.5km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">上海源深体育中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.8</div>
+                    </div>
+                    <div class="court-location">📍 浦东新区张杨路1458号源深体育中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">专业地胶</span>
+                        <span class="tag good">灯光充足</span>
+                        <span class="tag good">停车方便</span>
+                        <span class="tag info">16片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥90</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="shanghai" data-district="徐汇区" onclick="openCourtDetail('shanghai2')">
+                <div class="court-image">
+                    ⚽
+                    <span class="distance">5.2km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">上海体育馆羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.7</div>
+                    </div>
+                    <div class="court-location">📍 徐汇区漕溪北路1111号上海体育馆内</div>
+                    <div class="court-tags">
+                        <span class="tag good">地理位置好</span>
+                        <span class="tag good">设施齐全</span>
+                        <span class="tag warning">价格偏高</span>
+                        <span class="tag info">8片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥110</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="shenzhen" data-district="南山区" onclick="openCourtDetail('shenzhen1')">
+                <div class="court-image">
+                    🌴
+                    <span class="court-badge">热门推荐</span>
+                    <span class="distance">2.8km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">深圳湾体育中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.9</div>
+                    </div>
+                    <div class="court-location">📍 南山区滨海大道深圳湾体育中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">环境一流</span>
+                        <span class="tag good">视野开阔</span>
+                        <span class="tag good">停车便利</span>
+                        <span class="tag info">12片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥100</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="shenzhen" data-district="福田区" onclick="openCourtDetail('shenzhen2')">
+                <div class="court-image">
+                    🏢
+                    <span class="distance">4.1km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">福田体育公园羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.6</div>
+                    </div>
+                    <div class="court-location">📍 福田区福强路3030号福田体育公园内</div>
+                    <div class="court-tags">
+                        <span class="tag good">交通方便</span>
+                        <span class="tag good">性价比高</span>
+                        <span class="tag warning">周末需提前预约</span>
+                        <span class="tag info">10片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥75</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="guangzhou" data-district="天河区" onclick="openCourtDetail('guangzhou1')">
+                <div class="court-image">
+                    🌸
+                    <span class="court-badge">高端优选</span>
+                    <span class="distance">3.3km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">广州体育中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.8</div>
+                    </div>
+                    <div class="court-location">📍 天河区体育西路广州体育中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">专业场地</span>
+                        <span class="tag good">服务好</span>
+                        <span class="tag good">淋浴设施</span>
+                        <span class="tag info">14片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥85</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="chengdu" onclick="openCourtDetail('chengdu1')">
+                <div class="court-image">
+                    🐼
+                    <span class="distance">4.5km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">成都体育中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.7</div>
+                    </div>
+                    <div class="court-location">📍 锦江区人民中路一段118号成都体育中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">场地宽敞</span>
+                        <span class="tag good">价格实惠</span>
+                        <span class="tag good">交通便利</span>
+                        <span class="tag info">18片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥65</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="hangzhou" onclick="openCourtDetail('hangzhou1')">
+                <div class="court-image">
+                    🌊
+                    <span class="court-badge">热门推荐</span>
+                    <span class="distance">3.8km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">黄龙体育中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.8</div>
+                    </div>
+                    <div class="court-location">📍 西湖区曙光路120号黄龙体育中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">环境优美</span>
+                        <span class="tag good">设施先进</span>
+                        <span class="tag good">停车方便</span>
+                        <span class="tag info">20片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥95</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="wuhan" onclick="openCourtDetail('wuhan1')">
+                <div class="court-image">
+                    🌉
+                    <span class="distance">5.0km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">武汉体育中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.6</div>
+                    </div>
+                    <div class="court-location">📍 汉阳区体育路武汉体育中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">场地专业</span>
+                        <span class="tag good">价格合理</span>
+                        <span class="tag warning">灯光一般</span>
+                        <span class="tag info">16片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥70</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="nanjing" onclick="openCourtDetail('nanjing1')">
+                <div class="court-image">
+                    🏯
+                    <span class="distance">4.2km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">南京奥体中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.7</div>
+                    </div>
+                    <div class="court-location">📍 建邺区江东中路222号奥体中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">场地优质</span>
+                        <span class="tag good">停车方便</span>
+                        <span class="tag good">服务周到</span>
+                        <span class="tag info">12片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥80</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="nanjing" onclick="openCourtDetail('nanjing2')">
+                <div class="court-image">
+                    🏢
+                    <span class="court-badge">热门推荐</span>
+                    <span class="distance">3.8km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">南京体育学院羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.5</div>
+                    </div>
+                    <div class="court-location">📍 玄武区孝陵卫街道灵谷寺路8号</div>
+                    <div class="court-tags">
+                        <span class="tag good">价格实惠</span>
+                        <span class="tag good">学生优惠</span>
+                        <span class="tag good">交通便利</span>
+                        <span class="tag info">8片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥50</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="xian" onclick="openCourtDetail('xian1')">
+                <div class="court-image">
+                    🏛️
+                    <span class="court-badge">热门推荐</span>
+                    <span class="distance">3.2km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">陕西大会堂羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.7</div>
+                    </div>
+                    <div class="court-location">📍 雁塔区丈八东路303号陕西大会堂内</div>
+                    <div class="court-tags">
+                        <span class="tag good">环境优雅</span>
+                        <span class="tag good">停车方便</span>
+                        <span class="tag good">灯光充足</span>
+                        <span class="tag info">16片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥75</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="xian" onclick="openCourtDetail('xian2')">
+                <div class="court-image">
+                    ⛩️
+                    <span class="distance">4.5km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">西安市体育场羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.4</div>
+                    </div>
+                    <div class="court-location">📍 新城区西五路26号西安市体育场内</div>
+                    <div class="court-tags">
+                        <span class="tag good">地理位置好</span>
+                        <span class="tag good">价格合理</span>
+                        <span class="tag good">场地宽敞</span>
+                        <span class="tag info">12片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥60</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="beijing" data-district="海淀区" onclick="openCourtDetail('beijing3')">
+                <div class="court-image">
+                    🏠
+                    <span class="distance">5.6km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">五道口优肯羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.5</div>
+                    </div>
+                    <div class="court-location">📍 海淀区成府路28号优盛大厦B1层</div>
+                    <div class="court-tags">
+                        <span class="tag good">交通便利</span>
+                        <span class="tag good">性价比高</span>
+                        <span class="tag warning">周末人多</span>
+                        <span class="tag info">10片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥55</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="beijing" data-district="朝阳区" onclick="openCourtDetail('beijing4')">
+                <div class="court-image">
+                    🏬
+                    <span class="court-badge">高端优选</span>
+                    <span class="distance">6.2km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">国贸大酒店羽毛球中心</div>
+                        <div class="court-rating">⭐ 4.7</div>
+                    </div>
+                    <div class="court-location">📍 朝阳区建国门外大街1号国贸大酒店内</div>
+                    <div class="court-tags">
+                        <span class="tag good">环境奢华</span>
+                        <span class="tag good">服务一流</span>
+                        <span class="tag good">私密度高</span>
+                        <span class="tag info">6片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥150</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="shanghai" onclick="openCourtDetail('shanghai3')">
+                <div class="court-image">
+                    🌆
+                    <span class="distance">4.8km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">浦东羽毛球中心</div>
+                        <div class="court-rating">⭐ 4.5</div>
+                    </div>
+                    <div class="court-location">📍 浦东新区羽山路9号源深体育中心东区</div>
+                    <div class="court-tags">
+                        <span class="tag good">场地专业</span>
+                        <span class="tag good">停车便利</span>
+                        <span class="tag good">灯光好</span>
+                        <span class="tag info">20片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥85</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="shenzhen" onclick="openCourtDetail('shenzhen3')">
+                <div class="court-image">
+                    🏙️
+                    <span class="distance">5.3km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">龙岗体育中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.6</div>
+                    </div>
+                    <div class="court-location">📍 龙岗区龙翔大道3001号龙岗体育中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">场地宽敞</span>
+                        <span class="tag good">价格实惠</span>
+                        <span class="tag good">空气流通</span>
+                        <span class="tag info">24片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥65</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="guangzhou" data-district="天河区" onclick="openCourtDetail('guangzhou2')">
+                <div class="court-image">
+                    🌳
+                    <span class="court-badge">热门推荐</span>
+                    <span class="distance">4.1km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">天河体育中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.9</div>
+                    </div>
+                    <div class="court-location">📍 天河区天河路299号天河体育中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">赛事级场地</span>
+                        <span class="tag good">设施先进</span>
+                        <span class="tag good">交通便利</span>
+                        <span class="tag info">18片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥100</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="chengdu" onclick="openCourtDetail('chengdu2')">
+                <div class="court-image">
+                    🌿
+                    <span class="distance">3.8km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">青羊区羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.5</div>
+                    </div>
+                    <div class="court-location">📍 青羊区一环路西二段17号</div>
+                    <div class="court-tags">
+                        <span class="tag good">环境舒适</span>
+                        <span class="tag good">价格适中</span>
+                        <span class="tag good">有休息区</span>
+                        <span class="tag info">14片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥60</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="hangzhou" onclick="openCourtDetail('hangzhou2')">
+                <div class="court-image">
+                    🎋
+                    <span class="distance">4.6km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">杭州体育馆羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.6</div>
+                    </div>
+                    <div class="court-location">📍 拱墅区体育场路212号杭州体育馆内</div>
+                    <div class="court-tags">
+                        <span class="tag good">历史悠久</span>
+                        <span class="tag good">交通便利</span>
+                        <span class="tag good">停车方便</span>
+                        <span class="tag info">10片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥80</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="wuhan" onclick="openCourtDetail('wuhan2')">
+                <div class="court-image">
+                    🌆
+                    <span class="court-badge">高端优选</span>
+                    <span class="distance">3.5km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">光谷国际网球中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.8</div>
+                    </div>
+                    <div class="court-location">📍 东湖新技术开发区高新二路</div>
+                    <div class="court-tags">
+                        <span class="tag good">专业场地</span>
+                        <span class="tag good">环境优美</span>
+                        <span class="tag good">配套齐全</span>
+                        <span class="tag info">22片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥90</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="chongqing" onclick="openCourtDetail('chongqing1')">
+                <div class="court-image">
+                    🌉
+                    <span class="court-badge">热门推荐</span>
+                    <span class="distance">3.8km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">重庆奥体中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.6</div>
+                    </div>
+                    <div class="court-location">📍 九龙坡区袁家岗奥体中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">场地宽敞</span>
+                        <span class="tag good">停车方便</span>
+                        <span class="tag good">服务周到</span>
+                        <span class="tag info">18片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥65</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="tianjin" onclick="openCourtDetail('tianjin1')">
+                <div class="court-image">
+                    🏛️
+                    <span class="distance">4.2km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">天津奥林匹克中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.7</div>
+                    </div>
+                    <div class="court-location">📍 南开区宾水西道奥林匹克中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">设施先进</span>
+                        <span class="tag good">灯光充足</span>
+                        <span class="tag good">有淋浴</span>
+                        <span class="tag info">16片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥75</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="suzhou" onclick="openCourtDetail('suzhou1')">
+                <div class="court-image">
+                    🏯
+                    <span class="court-badge">热门推荐</span>
+                    <span class="distance">3.5km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">苏州奥林匹克体育中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.8</div>
+                    </div>
+                    <div class="court-location">📍 吴中区苏州大道东奥林匹克体育中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">环境一流</span>
+                        <span class="tag good">停车便利</span>
+                        <span class="tag good">服务优质</span>
+                        <span class="tag info">20片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥80</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="qingdao" onclick="openCourtDetail('qingdao1')">
+                <div class="court-image">
+                    🌊
+                    <span class="distance">4.5km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">青岛国信体育馆羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.6</div>
+                    </div>
+                    <div class="court-location">📍 崂山区银川东路3号国信体育馆内</div>
+                    <div class="court-tags">
+                        <span class="tag good">海景场地</span>
+                        <span class="tag good">空气清新</span>
+                        <span class="tag good">价格合理</span>
+                        <span class="tag info">14片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥70</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="changsha" onclick="openCourtDetail('changsha1')">
+                <div class="court-image">
+                    🌿
+                    <span class="court-badge">热门推荐</span>
+                    <span class="distance">3.2km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">长沙贺龙体育馆羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.7</div>
+                    </div>
+                    <div class="court-location">📍 天心区劳动西路299号贺龙体育馆内</div>
+                    <div class="court-tags">
+                        <span class="tag good">地理位置好</span>
+                        <span class="tag good">场地专业</span>
+                        <span class="tag good">交通便利</span>
+                        <span class="tag info">12片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥68</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="zhengzhou" onclick="openCourtDetail('zhengzhou1')">
+                <div class="court-image">
+                    🏛️
+                    <span class="distance">4.0km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">郑州奥林匹克体育中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.5</div>
+                    </div>
+                    <div class="court-location">📍 中原区西四环奥体中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">场地宽敞</span>
+                        <span class="tag good">价格实惠</span>
+                        <span class="tag good">停车方便</span>
+                        <span class="tag info">24片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥55</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="dongguan" onclick="openCourtDetail('dongguan1')">
+                <div class="court-image">
+                    🏙️
+                    <span class="court-badge">高端优选</span>
+                    <span class="distance">3.6km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">东莞羽毛球中心</div>
+                        <div class="court-rating">⭐ 4.8</div>
+                    </div>
+                    <div class="court-location">📍 南城区体育路东莞体育中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">专业地胶</span>
+                        <span class="tag good">灯光一流</span>
+                        <span class="tag good">服务周到</span>
+                        <span class="tag info">30片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥70</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="fuzhou" onclick="openCourtDetail('fuzhou1')">
+                <div class="court-image">
+                    🌳
+                    <span class="distance">4.3km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">福州海峡奥体中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.6</div>
+                    </div>
+                    <div class="court-location">📍 仓山区福湾路海峡奥体中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">环境优美</span>
+                        <span class="tag good">设施齐全</span>
+                        <span class="tag good">空气流通</span>
+                        <span class="tag info">16片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥65</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="court-card" data-city="xiamen" onclick="openCourtDetail('xiamen1')">
+                <div class="court-image">
+                    🌴
+                    <span class="court-badge">热门推荐</span>
+                    <span class="distance">3.9km</span>
+                </div>
+                <div class="court-info">
+                    <div class="court-header">
+                        <div class="court-name">厦门体育中心羽毛球馆</div>
+                        <div class="court-rating">⭐ 4.7</div>
+                    </div>
+                    <div class="court-location">📍 思明区体育路2号厦门体育中心内</div>
+                    <div class="court-tags">
+                        <span class="tag good">海景视野</span>
+                        <span class="tag good">交通便利</span>
+                        <span class="tag good">停车方便</span>
+                        <span class="tag info">12片场地</span>
+                    </div>
+                    <div class="court-footer">
+                        <div class="price-info">
+                            <span class="price">¥75</span>
+                            <span class="price-unit">/小时 起</span>
+                        </div>
+                        <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="book-modal">
+        <div class="modal" style="max-width: 550px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="position: sticky; top: 0; background: rgba(20, 30, 40, 0.98); z-index: 10; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                🏸 预约场地
+                <div class="close-btn" onclick="closeBookModal()">✕</div>
+            </div>
+            <div class="modal-body" style="padding: 20px; padding-bottom: 30px;">
+                <div id="book-court-info" style="margin-bottom: 20px;"></div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; color: #888;">预约日期</label>
+                    <input type="date" id="book-date" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 1rem;">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; color: #888;">开始时间</label>
+                    <div class="time-slots" id="book-start-time" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; color: #888;">时长</label>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="duration-btn active" onclick="selectDuration(this, 1)" style="flex: 1; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer;">1小时</button>
+                        <button class="duration-btn" onclick="selectDuration(this, 1.5)" style="flex: 1; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer;">1.5小时</button>
+                        <button class="duration-btn" onclick="selectDuration(this, 2)" style="flex: 1; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer;">2小时</button>
+                        <button class="duration-btn" onclick="selectDuration(this, 3)" style="flex: 1; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer;">3小时</button>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; color: #888;">场地类型</label>
+                    <select id="book-court-type" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 1rem;">
+                        <option value="普通场地">普通场地</option>
+                        <option value="VIP场地">VIP场地 (+30元/小时)</option>
+                        <option value="训练场地">训练场地 (-10元/小时)</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #888;">场地费用</span>
+                        <span id="book-price-result">¥0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; color: #f9d423; font-size: 1.1rem; font-weight: bold;">
+                        <span>预估总价</span>
+                        <span id="book-total-price">¥0</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px; padding: 15px; background: rgba(249, 212, 35, 0.08); border-left: 3px solid #f9d423; border-radius: 8px;">
+                    <div style="color: #f9d423; font-size: 0.9rem; font-weight: bold; margin-bottom: 8px;">💡 温馨提示</div>
+                    <ul style="color: rgba(255,255,255,0.75); font-size: 0.85rem; line-height: 1.8; padding-left: 20px; margin: 0;">
+                        <li>请提前 <b>15分钟</b> 到达球馆</li>
+                        <li>需自备球拍、运动鞋</li>
+                        <li>如需取消，请提前 <b>2小时</b> 操作</li>
+                        <li>客服：<b>400-888-8888</b></li>
+                    </ul>
+                </div>
+                
+                <div class="modal-buttons" style="display: flex; gap: 12px; position: sticky; bottom: 0; background: rgba(20, 30, 40, 0.98); padding: 15px -20px; margin: 0 -20px -30px; padding-left: 20px; padding-right: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <button class="btn-secondary" onclick="closeBookModal()" style="flex: 1; padding: 12px 24px; border-radius: 12px; border: none; font-size: 1rem; cursor: pointer; background: rgba(255,255,255,0.1); color: #fff;">取消</button>
+                    <button class="btn-primary" onclick="submitBook()" style="flex: 1; padding: 12px 24px; border-radius: 12px; border: none; font-size: 1rem; cursor: pointer; background: linear-gradient(135deg, #f9d423, #ff4e50); color: #fff;">确认预约</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="area-modal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                📍 选择区域
+                <div class="close-btn" onclick="closeAreaModal()">✕</div>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; color: #888;">选择城市</label>
+                    <select id="area-city" onchange="updateDistricts()" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff;">
+                        <option value="all">全国（全部城市）</option>
+                        <option value="beijing">北京市</option>
+                        <option value="shanghai">上海市</option>
+                        <option value="shenzhen">深圳市</option>
+                        <option value="guangzhou">广州市</option>
+                        <option value="chengdu">成都市</option>
+                        <option value="hangzhou">杭州市</option>
+                        <option value="wuhan">武汉市</option>
+                        <option value="nanjing">南京市</option>
+                        <option value="xian">西安市</option>
+                        <option value="chongqing">重庆市</option>
+                        <option value="tianjin">天津市</option>
+                        <option value="suzhou">苏州市</option>
+                        <option value="qingdao">青岛市</option>
+                        <option value="changsha">长沙市</option>
+                        <option value="zhengzhou">郑州市</option>
+                        <option value="dongguan">东莞市</option>
+                        <option value="fuzhou">福州市</option>
+                        <option value="xiamen">厦门市</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; color: #888;">选择区域</label>
+                    <select id="area-district" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff;">
+                    </select>
+                </div>
+                <button onclick="confirmArea()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer;">确认选择</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="court-modal">
+        <div class="modal" style="max-width: 700px; padding: 0; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                🏟️
+                <div class="close-btn" onclick="closeModal()">✕</div>
+            </div>
+            <div class="modal-body">
+                <div class="modal-title">
+                    <h2>首体网球羽毛球健身中心</h2>
+                    <div class="court-rating">⭐ 4.8 <span style="font-size: 0.85rem; color: #888; font-weight: normal;">(328条评价)</span></div>
+                </div>
+                <div class="modal-location">📍 海淀区中关村南大街54号首都体育馆内<br>🚇 地铁4号线/9号线国家图书馆站C口出，步行约600米</div>
+                
+                <div class="modal-tags">
+                    <span class="tag good">专业地胶</span>
+                    <span class="tag good">灯光充足</span>
+                    <span class="tag good">有淋浴</span>
+                    <span class="tag good">可预订</span>
+                    <span class="tag info">42片场地</span>
+                    <span class="tag">¥80/小时 起</span>
+                </div>
+
+                <div class="modal-section">
+                    <h3>📋 场馆信息</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="label">营业时间</div>
+                            <div class="value">09:00 - 22:00</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">场地数量</div>
+                            <div class="value">42片专业场地</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">场地类型</div>
+                            <div class="value">木地板+地胶</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">停车信息</div>
+                            <div class="value">¥8/小时，场内消费可抵扣</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-section">
+                    <h3>🛠️ 配套设施</h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        <span class="tag info">更衣室</span>
+                        <span class="tag info">淋浴间</span>
+                        <span class="tag info">休息区</span>
+                        <span class="tag info">免费WiFi</span>
+                        <span class="tag info">器材租赁</span>
+                        <span class="tag info">羽毛球用品店</span>
+                        <span class="tag info">自动售货机</span>
+                    </div>
+                </div>
+
+                <div class="modal-section">
+                    <h3>📊 评分详情</h3>
+                    <div class="rating-grid">
+                        <div class="rating-item">
+                            <div class="score">4.9</div>
+                            <div class="label">场地质量</div>
+                        </div>
+                        <div class="rating-item">
+                            <div class="score">4.8</div>
+                            <div class="label">灯光环境</div>
+                        </div>
+                        <div class="rating-item">
+                            <div class="score">4.7</div>
+                            <div class="label">服务态度</div>
+                        </div>
+                        <div class="rating-item">
+                            <div class="score">4.6</div>
+                            <div class="label">性价比</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-section">
+                    <h3>💬 最新评价 (328)</h3>
+                    <div class="review-list">
+                        <div class="review-item">
+                            <div class="review-header">
+                                <div class="review-user">
+                                    <div class="user-avatar">张</div>
+                                    <div class="user-info">
+                                        <div class="name">羽毛球达人</div>
+                                        <div class="level">4.5级玩家 · 已打50+次</div>
+                                    </div>
+                                </div>
+                                <span style="color:var(--primary-color);">⭐⭐⭐⭐⭐</span>
+                            </div>
+                            <div class="review-content">首体的场地没得说，专业级别的地胶，灯光也很充足不晃眼。就是周末人比较多，需要提前两三天预约。淋浴的水也很大，打完球洗个澡很舒服。</div>
+                            <div class="review-tags">
+                                <span class="review-tag">地胶专业</span>
+                                <span class="review-tag">灯光好</span>
+                                <span class="review-tag">淋浴舒服</span>
+                            </div>
+                        </div>
+                        <div class="review-item">
+                            <div class="review-header">
+                                <div class="review-user">
+                                    <div class="user-avatar">李</div>
+                                    <div class="user-info">
+                                        <div class="name">李姐爱打球</div>
+                                        <div class="level">3.5级玩家 · 已打20+次</div>
+                                    </div>
+                                </div>
+                                <span style="color:var(--primary-color);">⭐⭐⭐⭐⭐</span>
+                            </div>
+                            <div class="review-content">位置很好找，地铁出来走几分钟就到了。场地数量多，工作日下午去经常能订到。价格在海淀区来说算是中等偏上，但物有所值。服务人员态度也很好。</div>
+                            <div class="review-tags">
+                                <span class="review-tag">交通便利</span>
+                                <span class="review-tag">服务好</span>
+                                <span class="review-tag">场地多</span>
+                            </div>
+                        </div>
+                        <div class="review-item">
+                            <div class="review-header">
+                                <div class="review-user">
+                                    <div class="user-avatar">王</div>
+                                    <div class="user-info">
+                                        <div class="name">小王同学</div>
+                                        <div class="level">3.0级玩家 · 已打10次</div>
+                                    </div>
+                                </div>
+                                <span style="color:var(--primary-color);">⭐⭐⭐⭐</span>
+                            </div>
+                            <div class="review-content">作为学生党，周末去感觉有点小贵，但场地确实不错。建议大家可以工作日晚上去，价格会便宜一些。整体体验还是很好的，推荐给大家！</div>
+                            <div class="review-tags">
+                                <span class="review-tag">场地专业</span>
+                                <span class="review-tag">略贵</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-book" onclick="openBookModalFromDetail()">立即预约场地</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const courtDetails = {
+            'shouti': {
+                name: '首体网球羽毛球健身中心',
+                icon: '🏟️',
+                rating: 4.8,
+                reviewCount: 328,
+                location: '海淀区中关村南大街54号首都体育馆内',
+                subway: '地铁4号线/9号线国家图书馆站C口出，步行约600米',
+                tags: ['专业地胶', '灯光充足', '有淋浴', '可预订'],
+                courtCount: '42片场地',
+                price: 80,
+                businessHours: '09:00 - 22:00',
+                courtType: '木地板+地胶',
+                parking: '¥8/小时，场内消费可抵扣',
+                facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi', '器材租赁', '羽毛球用品店', '自动售货机'],
+                ratings: { court: 4.9, light: 4.8, service: 4.7, value: 4.6 },
+                reviews: [
+                    { name: '羽毛球达人', avatar: '张', level: '4.5级玩家 · 已打50+次', stars: 5, content: '首体的场地没得说，专业级别的地胶，灯光也很充足不晃眼。就是周末人比较多，需要提前两三天预约。淋浴的水也很大，打完球洗个澡很舒服。', tags: ['地胶专业', '灯光好', '淋浴舒服'] },
+                    { name: '李姐爱打球', avatar: '李', level: '3.5级玩家 · 已打20+次', stars: 5, content: '位置很好找，地铁出来走几分钟就到了。场地数量多，工作日下午去经常能订到。价格在海淀区来说算是中等偏上，但物有所值。服务人员态度也很好。', tags: ['交通便利', '服务好', '场地多'] },
+                    { name: '小王同学', avatar: '王', level: '3.0级玩家 · 已打10次', stars: 4, content: '作为学生党，周末去感觉有点小贵，但场地确实不错。建议大家可以工作日晚上去，价格会便宜一些。整体体验还是很好的，推荐给大家！', tags: ['场地专业', '略贵'] }
+                ]
+            },
+            'aoti': {
+                name: '奥体中心羽毛球馆',
+                icon: '🏆',
+                rating: 4.9,
+                reviewCount: 456,
+                location: '朝阳区国家奥林匹克体育中心内',
+                subway: '地铁8号线奥体中心站D口出，步行约400米',
+                tags: ['赛事级场地', '空调恒温', '免费停车'],
+                courtCount: '20片场地',
+                price: 120,
+                businessHours: '08:00 - 23:00',
+                courtType: '专业运动地胶',
+                parking: '免费停车3小时',
+                facilities: ['VIP更衣室', '豪华淋浴间', '休息大厅', '免费WiFi', '专业器材租赁', '运动用品店', '咖啡厅'],
+                ratings: { court: 5.0, light: 4.9, service: 4.8, value: 4.5 },
+                reviews: [
+                    { name: '羽球高手', avatar: '刘', level: '5.0级玩家 · 已打100+次', stars: 5, content: '奥体的场地绝对是北京顶级的，赛事级别的地胶，脚感非常好。空调恒温，夏天打球也不会太热。就是价格有点贵，但偶尔来一次还是很值得的。', tags: ['场地顶级', '环境好', '价格高'] },
+                    { name: '运动达人', avatar: '赵', level: '4.0级玩家 · 已打30+次', stars: 5, content: '经常来奥体打球，场地质量没话说。免费停车很方便，服务也很专业。推荐给追求高品质的球友们。', tags: ['场地专业', '停车方便', '服务好'] },
+                    { name: '健身小王子', avatar: '孙', level: '3.5级玩家 · 已打15次', stars: 4, content: '环境确实好，但是价格也确实高。偶尔来打一次还可以，经常来的话钱包受不了。不过场地质量真的没话说。', tags: ['环境好', '价格偏高'] }
+                ]
+            },
+            'chaoyang': {
+                name: '朝阳体育馆羽毛球馆',
+                icon: '🌆',
+                rating: 4.6,
+                reviewCount: 289,
+                location: '朝阳区姚家园路10号朝阳体育馆内',
+                subway: '地铁6号线十里堡站B口出，步行约500米',
+                tags: ['交通便利', '性价比高', '周末人多'],
+                courtCount: '12片场地',
+                price: 60,
+                businessHours: '09:00 - 22:00',
+                courtType: 'PVC地胶',
+                parking: '¥6/小时',
+                facilities: ['更衣室', '淋浴间', '休息区', '自动售货机'],
+                ratings: { court: 4.5, light: 4.6, service: 4.4, value: 4.8 },
+                reviews: [
+                    { name: '上班族小李', avatar: '李', level: '3.5级玩家 · 已打20+次', stars: 4, content: '性价比很高的球馆，价格实惠，场地也还可以。就是周末人太多了，经常订不到场地。建议工作日晚上去，人少还便宜。', tags: ['性价比高', '周末人多', '交通便利'] },
+                    { name: '朝阳球友', avatar: '王', level: '4.0级玩家 · 已打40+次', stars: 5, content: '家附近的球馆，经常来打。价格亲民，场地虽然不是顶级但也够用了。服务人员态度也很好，推荐给周边的球友。', tags: ['价格实惠', '方便', '服务好'] },
+                    { name: '新手小白', avatar: '张', level: '2.5级玩家 · 已打5次', stars: 4, content: '作为新手来这里练球还不错，价格便宜，人也不是特别多（工作日）。就是灯光一般，有时候会有点晃眼。', tags: ['适合新手', '价格便宜', '灯光一般'] }
+                ]
+            },
+            'shanghai1': {
+                name: '上海源深体育中心羽毛球馆',
+                icon: '🏙️',
+                rating: 4.8,
+                reviewCount: 378,
+                location: '浦东新区张杨路1458号源深体育中心内',
+                subway: '地铁6号线源深体育中心站2号口出，步行约300米',
+                tags: ['专业地胶', '灯光充足', '停车方便'],
+                courtCount: '16片场地',
+                price: 90,
+                businessHours: '08:00 - 22:00',
+                courtType: '专业地胶',
+                parking: '¥10/小时',
+                facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi', '器材租赁', '运动用品店'],
+                ratings: { court: 4.8, light: 4.9, service: 4.6, value: 4.7 },
+                reviews: [
+                    { name: '浦东球王', avatar: '陈', level: '4.5级玩家 · 已打60+次', stars: 5, content: '源深的场地在浦东算是很好的了，地胶专业，灯光也很舒服。交通便利，地铁出来就是。就是价格稍微贵了一点，但物有所值。', tags: ['地胶专业', '交通便利', '灯光好'] },
+                    { name: '上海羽球爱好者', avatar: '王', level: '4.0级玩家 · 已打30+次', stars: 5, content: '经常来源深打球，环境好，场地多，服务也不错。周末人比较多，需要提前预约。总体来说很满意。', tags: ['环境好', '场地多', '需预约'] }
+                ]
+            },
+            'shanghai2': {
+                name: '上海体育馆羽毛球馆',
+                icon: '⚽',
+                rating: 4.7,
+                reviewCount: 312,
+                location: '徐汇区漕溪北路1111号上海体育馆内',
+                subway: '地铁1/4号线上海体育馆站5号口出，步行约200米',
+                tags: ['地理位置好', '设施齐全', '价格偏高'],
+                courtCount: '8片场地',
+                price: 110,
+                businessHours: '09:00 - 22:00',
+                courtType: '木地板+地胶',
+                parking: '¥12/小时',
+                facilities: ['VIP更衣室', '淋浴间', '休息大厅', '免费WiFi', '器材租赁'],
+                ratings: { court: 4.7, light: 4.6, service: 4.5, value: 4.3 },
+                reviews: [
+                    { name: '徐汇老球友', avatar: '周', level: '4.0级玩家 · 已打50+次', stars: 4, content: '地理位置非常好，市中心地段，交通方便。场地质量也不错，就是价格有点偏高，场地数量也不多，经常订不到。', tags: ['位置好', '交通方便', '价格高'] }
+                ]
+            },
+            'shenzhen1': {
+                name: '深圳湾体育中心羽毛球馆',
+                icon: '🌴',
+                rating: 4.9,
+                reviewCount: 423,
+                location: '南山区滨海大道深圳湾体育中心内',
+                subway: '地铁2号线科苑站D口出，步行约600米',
+                tags: ['环境一流', '视野开阔', '停车便利'],
+                courtCount: '12片场地',
+                price: 100,
+                businessHours: '08:00 - 23:00',
+                courtType: '专业运动地胶',
+                parking: '¥8/小时',
+                facilities: ['豪华更衣室', '淋浴间', '观赛休息区', '免费WiFi', '专业器材', '咖啡厅'],
+                ratings: { court: 4.9, light: 4.8, service: 4.9, value: 4.7 },
+                reviews: [
+                    { name: '深圳湾球友', avatar: '林', level: '4.5级玩家 · 已打40+次', stars: 5, content: '深圳湾体育中心的环境真的太棒了，视野开阔，空气也好。场地质量一流，服务也很专业。就是周末人比较多，需要提前预约。', tags: ['环境好', '场地专业', '服务好'] }
+                ]
+            },
+            'shenzhen2': {
+                name: '福田体育公园羽毛球馆',
+                icon: '🏢',
+                rating: 4.6,
+                reviewCount: 267,
+                location: '福田区福强路3030号福田体育公园内',
+                subway: '地铁7号线沙尾站C口出，步行约400米',
+                tags: ['交通方便', '性价比高', '周末需提前预约'],
+                courtCount: '10片场地',
+                price: 75,
+                businessHours: '09:00 - 22:00',
+                courtType: 'PVC地胶',
+                parking: '¥6/小时',
+                facilities: ['更衣室', '淋浴间', '休息区', '自动售货机'],
+                ratings: { court: 4.5, light: 4.6, service: 4.4, value: 4.8 },
+                reviews: [
+                    { name: '福田上班族', avatar: '黄', level: '3.5级玩家 · 已打20+次', stars: 4, content: '性价比不错的球馆，价格适中，场地也还可以。周末人比较多，建议提前预约。工作日晚上人少一些，打球更舒服。', tags: ['性价比高', '交通方便', '周末人多'] }
+                ]
+            },
+            'guangzhou1': {
+                name: '广州体育中心羽毛球馆',
+                icon: '🌸',
+                rating: 4.8,
+                reviewCount: 345,
+                location: '天河区体育西路广州体育中心内',
+                subway: '地铁1/3号线体育西路站G口出，步行约300米',
+                tags: ['专业场地', '服务好', '淋浴设施'],
+                courtCount: '14片场地',
+                price: 85,
+                businessHours: '08:00 - 22:30',
+                courtType: '专业地胶',
+                parking: '¥8/小时',
+                facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi', '器材租赁', '运动用品店'],
+                ratings: { court: 4.8, light: 4.7, service: 4.8, value: 4.6 },
+                reviews: [
+                    { name: '天河羽球达人', avatar: '周', level: '4.5级玩家 · 已打50+次', stars: 5, content: '广州体育中心的场地很不错，专业地胶，灯光也很好。服务人员态度很好，淋浴设施也很完善。交通非常方便，地铁出来就是。', tags: ['场地专业', '服务好', '交通方便'] }
+                ]
+            },
+            'chengdu1': {
+                name: '成都体育中心羽毛球馆',
+                icon: '🐼',
+                rating: 4.7,
+                reviewCount: 234,
+                location: '锦江区人民中路一段118号成都体育中心内',
+                subway: '地铁1号线文殊院站B口出，步行约500米',
+                tags: ['场地宽敞', '价格实惠', '交通便利'],
+                courtCount: '18片场地',
+                price: 65,
+                businessHours: '09:00 - 22:00',
+                courtType: 'PVC地胶',
+                parking: '¥5/小时',
+                facilities: ['更衣室', '淋浴间', '休息区', '小卖部'],
+                ratings: { court: 4.6, light: 4.7, service: 4.5, value: 4.9 },
+                reviews: [
+                    { name: '成都球友', avatar: '刘', level: '4.0级玩家 · 已打30+次', stars: 5, content: '成都体育中心的场地很多，价格也实惠，性价比很高。交通方便，地铁出来走几步就到了。推荐给成都的球友们！', tags: ['场地多', '价格实惠', '交通方便'] }
+                ]
+            },
+            'hangzhou1': {
+                name: '黄龙体育中心羽毛球馆',
+                icon: '🌊',
+                rating: 4.8,
+                reviewCount: 298,
+                location: '西湖区曙光路120号黄龙体育中心内',
+                subway: '地铁2号线黄龙体育中心站C口出，步行约400米',
+                tags: ['环境优美', '设施先进', '停车方便'],
+                courtCount: '20片场地',
+                price: 95,
+                businessHours: '08:00 - 22:00',
+                courtType: '专业运动地胶',
+                parking: '¥8/小时',
+                facilities: ['豪华更衣室', '淋浴间', '观赛台', '免费WiFi', '器材租赁', '运动用品店'],
+                ratings: { court: 4.8, light: 4.9, service: 4.7, value: 4.6 },
+                reviews: [
+                    { name: '杭州羽球爱好者', avatar: '赵', level: '4.5级玩家 · 已打40+次', stars: 5, content: '黄龙体育中心的环境真的很好，周围都是绿植，空气清新。场地设施先进，灯光也很舒服。是杭州最好的羽毛球馆之一。', tags: ['环境好', '设施先进', '灯光好'] }
+                ]
+            },
+            'beijing3': {
+                name: '五道口优肯羽毛球馆',
+                icon: '🏠',
+                rating: 4.5,
+                reviewCount: 215,
+                location: '海淀区成府路28号优盛大厦B1层',
+                subway: '地铁13号线五道口站A口出，步行约300米',
+                tags: ['交通便利', '性价比高', '周末人多'],
+                courtCount: '10片场地',
+                price: 55,
+                businessHours: '09:00 - 22:00',
+                courtType: 'PVC地胶',
+                parking: '¥6/小时，优盛大厦地下车库',
+                facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi', '自动售货机', '器材租赁'],
+                ratings: { court: 4.5, light: 4.4, service: 4.5, value: 4.7 },
+                reviews: [
+                    { name: '五道口小王子', avatar: '陈', level: '4.0级玩家 · 已打30+次', stars: 5, content: '就在五道口地铁站旁边，交通特别方便。价格在海淀区算是很亲民的了，地胶质量也不错。就是周末人比较多，建议提前两三天预约。', tags: ['交通便利', '性价比高', '周末人多'] },
+                    { name: '学生党小张', avatar: '张', level: '3.0级玩家 · 已打15次', stars: 4, content: '附近学生党的福音，价格便宜，工作日晚上来打球很合适。场地是PVC地胶，稍微有点滑，新手要注意。整体还是推荐的。', tags: ['价格便宜', '适合学生', '地胶偏滑'] },
+                    { name: '中关村球友', avatar: '李', level: '3.5级玩家 · 已打20+次', stars: 4, content: '在优盛大厦地下，位置好找。场地维护得还行，淋浴水压一般。工作日去人少，体验更好。停车可以停大厦车库，比较方便。', tags: ['停车方便', '工作日体验好', '淋浴一般'] }
+                ]
+            },
+            'beijing4': {
+                name: '国贸大酒店羽毛球中心',
+                icon: '🏬',
+                rating: 4.7,
+                reviewCount: 168,
+                location: '朝阳区建国门外大街1号国贸大酒店内',
+                subway: '地铁1号线/10号线国贸站E1口出，步行约200米',
+                tags: ['环境奢华', '服务一流', '私密度高'],
+                courtCount: '6片场地',
+                price: 150,
+                businessHours: '07:00 - 23:00',
+                courtType: '专业运动地胶',
+                parking: '¥15/小时，住店客人免费',
+                facilities: ['VIP更衣室', '豪华淋浴间', '休息大厅', '免费WiFi', '专业器材', '毛巾浴巾', '茶水服务'],
+                ratings: { court: 4.8, light: 4.8, service: 4.9, value: 4.2 },
+                reviews: [
+                    { name: '商务球友', avatar: '王', level: '4.5级玩家 · 已打25+次', stars: 5, content: '国贸的羽毛球中心环境真的没话说，五星级酒店配套，服务一流。打完球还有毛巾和茶水提供，私密性也很好，适合商务接待或者特别的日子来。', tags: ['环境奢华', '服务一流', '私密性好'] },
+                    { name: 'CBD上班族', avatar: '赵', level: '4.0级玩家 · 已打10次', stars: 4, content: '下班直接过来打球很方便，场地质量很高，灯光舒服不晃眼。就是价格确实贵，偶尔来一次还可以，经常来钱包受不了。', tags: ['位置好', '场地专业', '价格偏高'] },
+                    { name: '精致生活家', avatar: '刘', level: '3.5级玩家 · 已打8次', stars: 5, content: '来这边打球更像是一种享受，更衣室干净整洁，淋浴用品都是大牌。场地数量不多但人也不多，打球很安静。推荐给追求品质的球友。', tags: ['服务好', '环境好', '人少安静'] }
+                ]
+            },
+            'shanghai3': {
+                name: '浦东羽毛球中心',
+                icon: '🌆',
+                rating: 4.5,
+                reviewCount: 287,
+                location: '浦东新区羽山路9号源深体育中心东区',
+                subway: '地铁6号线源深体育中心站2号口出，步行约350米',
+                tags: ['场地专业', '停车便利', '灯光好'],
+                courtCount: '20片场地',
+                price: 85,
+                businessHours: '08:00 - 22:00',
+                courtType: '专业地胶',
+                parking: '¥8/小时，体育中心内大型停车场',
+                facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi', '器材租赁', '运动用品店', '自动售货机'],
+                ratings: { court: 4.6, light: 4.7, service: 4.4, value: 4.5 },
+                reviews: [
+                    { name: '浦东老球友', avatar: '周', level: '4.5级玩家 · 已打50+次', stars: 5, content: '源深东区的羽毛球馆场地很多，专业地胶脚感不错，灯光也舒服。停车很方便，停车场很大。周末人多，建议提前预约。', tags: ['场地专业', '停车方便', '灯光好'] },
+                    { name: '羽山路人', avatar: '吴', level: '3.5级玩家 · 已打20+次', stars: 4, content: '家附近的球馆，经常来打。20片场地不算少，但晚上黄金时段还是紧俏。价格在浦东算中等，性价比可以。淋浴有时候要排队。', tags: ['场地多', '交通便利', '淋浴排队'] },
+                    { name: '上海球友小林', avatar: '林', level: '4.0级玩家 · 已打15次', stars: 4, content: '场地质量不错，地胶维护得挺好。就是服务人员响应有点慢，前台办理入场要等一会儿。整体来说还是推荐的。', tags: ['场地好', '服务一般', '性价比可以'] }
+                ]
+            },
+            'shenzhen3': {
+                name: '龙岗体育中心羽毛球馆',
+                icon: '🏙️',
+                rating: 4.6,
+                reviewCount: 198,
+                location: '龙岗区龙翔大道3001号龙岗体育中心内',
+                subway: '地铁3号线大运站C口出，步行约800米',
+                tags: ['场地宽敞', '价格实惠', '空气流通'],
+                courtCount: '24片场地',
+                price: 65,
+                businessHours: '09:00 - 22:00',
+                courtType: 'PVC地胶',
+                parking: '¥5/小时，体育中心内免费停车2小时',
+                facilities: ['更衣室', '淋浴间', '休息区', '自动售货机', '小卖部', '器材租赁'],
+                ratings: { court: 4.5, light: 4.5, service: 4.4, value: 4.8 },
+                reviews: [
+                    { name: '龙岗球友', avatar: '黄', level: '4.0级玩家 · 已打30+次', stars: 5, content: '龙岗这边场地最多的球馆了，24片场地，场地很宽敞，空气流通也好。价格实惠，性价比很高。就是离市区有点远，住附近的话很推荐。', tags: ['场地多', '价格实惠', '性价比高'] },
+                    { name: '大运上班族', avatar: '郑', level: '3.5级玩家 · 已打18次', stars: 4, content: '工作日下班过来打球很方便，场地空位多。地胶稍微旧了点，但不影响使用。停车便宜，整体很满意。', tags: ['工作日空位多', '停车便宜', '地胶偏旧'] },
+                    { name: '深圳羽球爱好者', avatar: '梁', level: '3.0级玩家 · 已打10次', stars: 4, content: '第一次来龙岗体育中心打球，场地宽敞不压抑。淋浴设施比较基础，但也够用。价格亲民，会再来。', tags: ['场地宽敞', '价格亲民', '设施基础'] }
+                ]
+            },
+            'guangzhou2': {
+                name: '天河体育中心羽毛球馆',
+                icon: '🌳',
+                rating: 4.9,
+                reviewCount: 412,
+                location: '天河区天河路299号天河体育中心内',
+                subway: '地铁1号线/3号线体育西路站D口出，步行约400米',
+                tags: ['赛事级场地', '设施先进', '交通便利'],
+                courtCount: '18片场地',
+                price: 100,
+                businessHours: '08:00 - 22:30',
+                courtType: '赛事级专业地胶',
+                parking: '¥8/小时，体育中心地下车库',
+                facilities: ['豪华更衣室', '淋浴间', '观赛休息区', '免费WiFi', '专业器材租赁', '运动用品店', '咖啡厅'],
+                ratings: { court: 4.9, light: 4.9, service: 4.8, value: 4.6 },
+                reviews: [
+                    { name: '天河球王', avatar: '陈', level: '5.0级玩家 · 已打80+次', stars: 5, content: '天河体育中心的场地绝对是广州顶级的，赛事级别的地胶，脚感非常好。设施先进，灯光也专业。交通超级方便，地铁直达。强烈推荐！', tags: ['赛事级场地', '设施先进', '交通便利'] },
+                    { name: '广州羽球达人', avatar: '黄', level: '4.5级玩家 · 已打40+次', stars: 5, content: '经常来这里打球，场地维护得很好，地胶很新。服务人员专业热情，淋浴设施完善。周末人比较多，需要提前3天预约。', tags: ['场地专业', '服务好', '需提前预约'] },
+                    { name: '体育西路上班族', avatar: '何', level: '4.0级玩家 · 已打25次', stars: 4, content: '下班直接从公司过来打球很方便。场地一流，就是价格稍微贵了点，但物有所值。咖啡厅休息区很舒服。', tags: ['位置好', '场地一流', '价格偏贵'] }
+                ]
+            },
+            'chengdu2': {
+                name: '青羊区羽毛球馆',
+                icon: '🌿',
+                rating: 4.5,
+                reviewCount: 176,
+                location: '青羊区一环路西二段17号',
+                subway: '地铁4号线中医大省医院站B口出，步行约400米',
+                tags: ['环境舒适', '价格适中', '有休息区'],
+                courtCount: '14片场地',
+                price: 60,
+                businessHours: '09:00 - 22:00',
+                courtType: 'PVC地胶',
+                parking: '¥5/小时，路边停车位有限',
+                facilities: ['更衣室', '淋浴间', '休息区', '自动售货机', '器材租赁'],
+                ratings: { court: 4.4, light: 4.5, service: 4.4, value: 4.7 },
+                reviews: [
+                    { name: '青羊球友', avatar: '杨', level: '4.0级玩家 · 已打30+次', stars: 5, content: '青羊区这边性价比很高的球馆，价格适中，场地也还可以。环境舒适，休息区挺大的。工作日去人不多，体验不错。', tags: ['性价比高', '环境舒适', '工作日人少'] },
+                    { name: '成都慢生活', avatar: '吴', level: '3.5级玩家 · 已打20次', stars: 4, content: '老城区的球馆，位置不错，地铁方便。场地稍微有点旧，但打理得还算干净。价格亲民，适合常来。', tags: ['位置好', '价格亲民', '场地偏旧'] },
+                    { name: '一环路球友', avatar: '唐', level: '3.0级玩家 · 已打12次', stars: 4, content: '停车有点难，路边位子少，建议地铁来。场地数量够用，灯光一般。整体来说中规中矩，胜在价格实惠。', tags: ['停车难', '价格实惠', '地铁方便'] }
+                ]
+            },
+            'hangzhou2': {
+                name: '杭州体育馆羽毛球馆',
+                icon: '🎋',
+                rating: 4.6,
+                reviewCount: 203,
+                location: '拱墅区体育场路212号杭州体育馆内',
+                subway: '地铁1号线武林广场站B口出，步行约600米',
+                tags: ['历史悠久', '交通便利', '停车方便'],
+                courtCount: '10片场地',
+                price: 80,
+                businessHours: '09:00 - 22:00',
+                courtType: '木地板+地胶',
+                parking: '¥6/小时，体育馆停车场',
+                facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi', '自动售货机', '器材租赁'],
+                ratings: { court: 4.5, light: 4.6, service: 4.5, value: 4.6 },
+                reviews: [
+                    { name: '武林球友', avatar: '沈', level: '4.0级玩家 · 已打30+次', stars: 5, content: '杭州体育馆是老场馆了，历史悠久，但场地维护得还不错。交通很方便，武林广场地铁出来走几分钟。停车也方便，价格合理。', tags: ['历史悠久', '交通便利', '停车方便'] },
+                    { name: '体育场路居民', avatar: '许', level: '3.5级玩家 · 已打18次', stars: 4, content: '家附近的球馆，经常来打。木地板加地胶的组合脚感不错，灯光也行。就是场地数量不多，晚上要提前订。', tags: ['场地不错', '需提前订', '离家近'] },
+                    { name: '杭州上班族', avatar: '蒋', level: '3.0级玩家 · 已打8次', stars: 4, content: '老场馆有老场馆的味道，干净整洁。工作人员态度好，淋浴水压足。性价比不错，推荐给周边球友。', tags: ['干净整洁', '服务好', '性价比不错'] }
+                ]
+            },
+            'wuhan1': {
+                name: '武汉体育中心羽毛球馆',
+                icon: '🌉',
+                rating: 4.6,
+                reviewCount: 234,
+                location: '汉阳区体育路武汉体育中心内',
+                subway: '地铁3号线体育中心站A口出，步行约500米',
+                tags: ['场地专业', '价格合理', '灯光一般'],
+                courtCount: '16片场地',
+                price: 70,
+                businessHours: '09:00 - 22:00',
+                courtType: 'PVC地胶',
+                parking: '¥5/小时，体育中心大型停车场',
+                facilities: ['更衣室', '淋浴间', '休息区', '自动售货机', '器材租赁', '小卖部'],
+                ratings: { court: 4.6, light: 4.2, service: 4.5, value: 4.7 },
+                reviews: [
+                    { name: '汉阳球友', avatar: '蔡', level: '4.0级玩家 · 已打30+次', stars: 5, content: '武汉体育中心的场地很专业，地胶质量好，价格也合理。场地数量多，工作日基本能订到。性价比很高，推荐。', tags: ['场地专业', '价格合理', '性价比高'] },
+                    { name: '武汉羽球爱好者', avatar: '谭', level: '3.5级玩家 · 已打20次', stars: 4, content: '场地整体不错，就是灯光有点一般，有些位置打球会晃眼。建议改进一下灯光。其他方面都挺好的，停车也方便。', tags: ['场地好', '灯光一般', '停车方便'] },
+                    { name: '汉口过来打球', avatar: '熊', level: '3.0级玩家 · 已打10次', stars: 4, content: '从汉口过来有点远，但场地确实不错，值得跑一趟。淋浴设施齐全，服务也还行。周末人比较多。', tags: ['场地不错', '设施齐全', '周末人多'] }
+                ]
+            },
+            'wuhan2': {
+                name: '光谷国际网球中心羽毛球馆',
+                icon: '🌆',
+                rating: 4.8,
+                reviewCount: 312,
+                location: '东湖新技术开发区高新二路',
+                subway: '地铁2号线光谷广场站转公交，或自驾前往',
+                tags: ['专业场地', '环境优美', '配套齐全'],
+                courtCount: '22片场地',
+                price: 90,
+                businessHours: '08:00 - 22:00',
+                courtType: '赛事级专业地胶',
+                parking: '¥6/小时，免费停车2小时',
+                facilities: ['豪华更衣室', '淋浴间', '观赛休息区', '免费WiFi', '专业器材', '咖啡厅', '运动用品店'],
+                ratings: { court: 4.9, light: 4.8, service: 4.7, value: 4.6 },
+                reviews: [
+                    { name: '光谷球友', avatar: '邓', level: '4.5级玩家 · 已打40+次', stars: 5, content: '光谷国际网球中心的羽毛球馆真的是顶级配置，22片场地，赛事级地胶，环境也优美。配套齐全，有咖啡厅可以休息。强烈推荐！', tags: ['专业场地', '环境优美', '配套齐全'] },
+                    { name: '高新区上班族', avatar: '彭', level: '4.0级玩家 · 已打25次', stars: 5, content: '在光谷上班，下班直接过来打球很方便。场地质量一流，灯光舒服。就是地铁过来有点远，自驾更方便。', tags: ['场地一流', '适合自驾', '灯光好'] },
+                    { name: '武汉球友小李', avatar: '李', level: '3.5级玩家 · 已打15次', stars: 4, content: '场地确实好，就是价格稍贵。不过体验确实值这个价。淋浴豪华，休息区舒服。适合偶尔来享受一下。', tags: ['场地好', '价格偏贵', '设施豪华'] }
+                ]
+            },
+            'nanjing1': {
+                name: '南京奥体中心羽毛球馆',
+                icon: '🏯',
+                rating: 4.7,
+                reviewCount: 278,
+                location: '建邺区江东中路222号奥体中心内',
+                subway: '地铁2号线/10号线奥体中心站2口出，步行约300米',
+                tags: ['场地优质', '停车方便', '服务周到'],
+                courtCount: '12片场地',
+                price: 80,
+                businessHours: '08:00 - 22:00',
+                courtType: '专业运动地胶',
+                parking: '¥6/小时，奥体中心大型停车场',
+                facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi', '器材租赁', '运动用品店', '自动售货机'],
+                ratings: { court: 4.7, light: 4.7, service: 4.7, value: 4.6 },
+                reviews: [
+                    { name: '建邺球友', avatar: '朱', level: '4.5级玩家 · 已打40+次', stars: 5, content: '南京奥体中心的场地质量很好，专业地胶，脚感舒适。停车很方便，停车场大。服务周到，工作人员热情。推荐！', tags: ['场地优质', '停车方便', '服务好'] },
+                    { name: '河西上班族', avatar: '钱', level: '4.0级玩家 · 已打20次', stars: 4, content: '在河西上班，下班过来打球很方便。场地维护得不错，灯光也好。周末人比较多，需要提前预约。', tags: ['交通便利', '场地好', '需预约'] },
+                    { name: '南京羽球爱好者', avatar: '孙', level: '3.5级玩家 · 已打12次', stars: 5, content: '奥体中心的设施确实好，淋浴水压足，更衣室干净。价格合理，性价比高。会经常来。', tags: ['设施好', '性价比高', '干净整洁'] }
+                ]
+            },
+            'nanjing2': {
+                name: '南京体育学院羽毛球馆',
+                icon: '🏢',
+                rating: 4.5,
+                reviewCount: 156,
+                location: '玄武区孝陵卫街道灵谷寺路8号',
+                subway: '地铁2号线钟灵街站1口出，步行约700米',
+                tags: ['价格实惠', '学生优惠', '交通便利'],
+                courtCount: '8片场地',
+                price: 50,
+                businessHours: '09:00 - 22:00',
+                courtType: 'PVC地胶',
+                parking: '¥4/小时，校内停车位有限',
+                facilities: ['更衣室', '淋浴间', '休息区', '自动售货机', '器材租赁'],
+                ratings: { court: 4.4, light: 4.4, service: 4.3, value: 4.9 },
+                reviews: [
+                    { name: '体院学生', avatar: '周', level: '3.5级玩家 · 已打30+次', stars: 5, content: '本校学生有优惠，价格超级实惠！场地是PVC地胶，对学生党来说完全够用了。课后来打球很方便。', tags: ['学生优惠', '价格实惠', '交通便利'] },
+                    { name: '孝陵卫球友', avatar: '吴', level: '3.0级玩家 · 已打15次', stars: 4, content: '价格便宜是最大的优势，50元一小时在南京很难找了。场地数量不多，晚上要提前订。地胶有点旧但能用。', tags: ['价格便宜', '场地偏少', '地胶偏旧'] },
+                    { name: '南京球友小赵', avatar: '赵', level: '4.0级玩家 · 已打10次', stars: 4, content: '体院里面的球馆，氛围不错，能看到学生训练。停车不太方便，建议地铁来。性价比超高。', tags: ['氛围好', '性价比高', '停车不便'] }
+                ]
+            },
+            'xian1': {
+                name: '陕西大会堂羽毛球馆',
+                icon: '🏛️',
+                rating: 4.7,
+                reviewCount: 198,
+                location: '雁塔区丈八东路303号陕西大会堂内',
+                subway: '地铁3号线丈八北路站B口出，步行约600米',
+                tags: ['环境优雅', '停车方便', '灯光充足'],
+                courtCount: '16片场地',
+                price: 75,
+                businessHours: '09:00 - 22:00',
+                courtType: '专业地胶',
+                parking: '¥5/小时，大会堂停车场充足',
+                facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi', '器材租赁', '自动售货机'],
+                ratings: { court: 4.7, light: 4.8, service: 4.6, value: 4.6 },
+                reviews: [
+                    { name: '雁塔球友', avatar: '马', level: '4.0级玩家 · 已打25+次', stars: 5, content: '陕西大会堂的球馆环境很优雅，场地专业，灯光充足不晃眼。停车很方便，停车场大。价格合理，推荐。', tags: ['环境优雅', '停车方便', '灯光好'] },
+                    { name: '西安羽球爱好者', avatar: '魏', level: '3.5级玩家 · 已打18次', stars: 4, content: '场地质量不错，地胶专业。就是周末人多，需要提前预约。服务人员态度好，淋浴设施完善。', tags: ['场地专业', '需预约', '服务好'] },
+                    { name: '丈八路上班族', avatar: '薛', level: '3.0级玩家 · 已打10次', stars: 5, content: '就在单位附近，下班过来打球很方便。环境好，场地多，价格也合理。是西安性价比不错的球馆。', tags: ['交通便利', '性价比高', '场地多'] }
+                ]
+            },
+            'xian2': {
+                name: '西安市体育场羽毛球馆',
+                icon: '⛩️',
+                rating: 4.4,
+                reviewCount: 167,
+                location: '新城区西五路26号西安市体育场内',
+                subway: '地铁1号线五路口站D口出，步行约400米',
+                tags: ['地理位置好', '价格合理', '场地宽敞'],
+                courtCount: '12片场地',
+                price: 60,
+                businessHours: '09:00 - 22:00',
+                courtType: 'PVC地胶',
+                parking: '¥5/小时，体育场内停车位紧张',
+                facilities: ['更衣室', '淋浴间', '休息区', '自动售货机', '小卖部'],
+                ratings: { court: 4.3, light: 4.3, service: 4.3, value: 4.7 },
+                reviews: [
+                    { name: '新城球友', avatar: '贺', level: '3.5级玩家 · 已打20+次', stars: 4, content: '市中心的球馆，地理位置特别好，交通方便。价格合理，场地宽敞。就是设施有点老了，淋浴一般。', tags: ['位置好', '价格合理', '设施偏旧'] },
+                    { name: '西五路居民', avatar: '袁', level: '3.0级玩家 · 已打12次', stars: 4, content: '老体育场了，有历史感。场地够用，价格便宜。停车比较难，建议地铁来。性价比高。', tags: ['价格便宜', '停车难', '地铁方便'] },
+                    { name: '西安球友小田', avatar: '田', level: '4.0级玩家 · 已打8次', stars: 4, content: '场地宽敞不压抑，地胶还行。灯光稍微暗了点。胜在价格实惠，位置好，适合常来。', tags: ['场地宽敞', '价格实惠', '灯光偏暗'] }
+                ]
+            },
+            'chongqing1': {
+                name: '重庆奥体中心羽毛球馆',
+                icon: '🌉',
+                rating: 4.6,
+                reviewCount: 221,
+                location: '九龙坡区袁家岗奥体中心内',
+                subway: '地铁2号线袁家岗站A口出，步行约500米',
+                tags: ['场地宽敞', '停车方便', '服务周到'],
+                courtCount: '18片场地',
+                price: 65,
+                businessHours: '09:00 - 22:00',
+                courtType: 'PVC地胶',
+                parking: '¥5/小时，奥体中心停车场',
+                facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi', '器材租赁', '自动售货机', '小卖部'],
+                ratings: { court: 4.6, light: 4.5, service: 4.6, value: 4.7 },
+                reviews: [
+                    { name: '九龙坡球友', avatar: '向', level: '4.0级玩家 · 已打30+次', stars: 5, content: '重庆奥体中心的场地很宽敞，18片场地，地胶质量不错。停车方便，服务周到。价格合理，性价比高。', tags: ['场地宽敞', '停车方便', '性价比高'] },
+                    { name: '山城球友', avatar: '邓', level: '3.5级玩家 · 已打20次', stars: 4, content: '袁家岗地铁出来很近，交通方便。场地维护得还行，就是夏天有点闷热，空调不太够。', tags: ['交通便利', '夏天闷热', '场地还行'] },
+                    { name: '重庆羽球爱好者', avatar: '余', level: '3.0级玩家 · 已打10次', stars: 5, content: '经常来这边打球，工作人员态度很好。淋浴水压足，更衣室干净。价格实惠，推荐给重庆球友。', tags: ['服务好', '价格实惠', '干净整洁'] }
+                ]
+            },
+            'tianjin1': {
+                name: '天津奥林匹克中心羽毛球馆',
+                icon: '🏛️',
+                rating: 4.7,
+                reviewCount: 189,
+                location: '南开区宾水西道奥林匹克中心内',
+                subway: '地铁6号线水上公园东路站C口出，步行约600米',
+                tags: ['设施先进', '灯光充足', '有淋浴'],
+                courtCount: '16片场地',
+                price: 75,
+                businessHours: '08:00 - 22:00',
+                courtType: '专业运动地胶',
+                parking: '¥6/小时，奥体中心停车场',
+                facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi', '器材租赁', '运动用品店', '自动售货机'],
+                ratings: { court: 4.7, light: 4.8, service: 4.6, value: 4.6 },
+                reviews: [
+                    { name: '南开球友', avatar: '韩', level: '4.5级玩家 · 已打35+次', stars: 5, content: '天津奥体中心的设施很先进，场地专业，灯光充足不晃眼。淋浴设施完善，打完球洗个澡很舒服。推荐！', tags: ['设施先进', '灯光好', '淋浴完善'] },
+                    { name: '天津上班族', avatar: '冯', level: '4.0级玩家 · 已打20次', stars: 4, content: '下班过来打球很方便，场地质量不错。就是周末人多，需要提前预约。停车方便，价格合理。', tags: ['交通便利', '需预约', '停车方便'] },
+                    { name: '津门球友', avatar: '曹', level: '3.5级玩家 · 已打12次', stars: 5, content: '奥体中心的场地在天津算很好的了，地胶专业，脚感好。服务人员热情，环境干净。会常来。', tags: ['场地专业', '服务好', '环境干净'] }
+                ]
+            },
+            'suzhou1': {
+                name: '苏州奥林匹克体育中心羽毛球馆',
+                icon: '🏯',
+                rating: 4.8,
+                reviewCount: 267,
+                location: '吴中区苏州大道东奥林匹克体育中心内',
+                subway: '地铁1号线星塘街站转公交，或自驾前往',
+                tags: ['环境一流', '停车便利', '服务优质'],
+                courtCount: '20片场地',
+                price: 80,
+                businessHours: '08:00 - 22:00',
+                courtType: '专业运动地胶',
+                parking: '¥5/小时，免费停车2小时，停车场超大',
+                facilities: ['豪华更衣室', '淋浴间', '观赛休息区', '免费WiFi', '专业器材', '咖啡厅', '运动用品店'],
+                ratings: { court: 4.8, light: 4.8, service: 4.8, value: 4.7 },
+                reviews: [
+                    { name: '苏州球友', avatar: '顾', level: '4.5级玩家 · 已打40+次', stars: 5, content: '苏州奥体中心的环境一流，20片场地，专业地胶。停车超级方便，停车场很大。服务优质，强烈推荐！', tags: ['环境一流', '停车便利', '服务优质'] },
+                    { name: '园区上班族', avatar: '陆', level: '4.0级玩家 · 已打25次', stars: 5, content: '在园区上班，下班过来很方便。场地质量好，灯光舒服。配套齐全，有咖啡厅休息。性价比高。', tags: ['场地好', '配套齐全', '性价比高'] },
+                    { name: '江南羽球爱好者', avatar: '沈', level: '3.5级玩家 · 已打15次', stars: 4, content: '新建的体育中心，设施很新。就是地铁过来不太方便，建议自驾。场地和服务的确一流。', tags: ['设施新', '建议自驾', '服务一流'] }
+                ]
+            },
+            'qingdao1': {
+                name: '青岛国信体育馆羽毛球馆',
+                icon: '🌊',
+                rating: 4.6,
+                reviewCount: 178,
+                location: '崂山区银川东路3号国信体育馆内',
+                subway: '地铁2号线银川东路站B口出，步行约400米',
+                tags: ['海景场地', '空气清新', '价格合理'],
+                courtCount: '14片场地',
+                price: 70,
+                businessHours: '09:00 - 22:00',
+                courtType: '专业地胶',
+                parking: '¥5/小时，体育馆停车场',
+                facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi', '器材租赁', '自动售货机'],
+                ratings: { court: 4.6, light: 4.6, service: 4.5, value: 4.7 },
+                reviews: [
+                    { name: '崂山球友', avatar: '姜', level: '4.0级玩家 · 已打25+次', stars: 5, content: '国信体育馆在崂山，空气清新，靠近海边环境很好。场地专业，价格合理。地铁直达很方便。推荐！', tags: ['空气清新', '价格合理', '交通便利'] },
+                    { name: '青岛羽球爱好者', avatar: '于', level: '3.5级玩家 · 已打18次', stars: 4, content: '场地质量不错，地胶专业。就是海风大的时候窗户会有点响。整体体验很好，性价比高。', tags: ['场地专业', '性价比高', '海风略大'] },
+                    { name: '青岛上班族', avatar: '苏', level: '3.0级玩家 · 已打10次', stars: 5, content: '在崂山上班，下班过来打球很方便。环境好，场地多，停车也方便。会经常来。', tags: ['环境好', '停车方便', '场地多'] }
+                ]
+            },
+            'changsha1': {
+                name: '长沙贺龙体育馆羽毛球馆',
+                icon: '🌿',
+                rating: 4.7,
+                reviewCount: 245,
+                location: '天心区劳动西路299号贺龙体育馆内',
+                subway: '地铁1号线侯家塘站3口出，步行约500米',
+                tags: ['地理位置好', '场地专业', '交通便利'],
+                courtCount: '12片场地',
+                price: 68,
+                businessHours: '09:00 - 22:00',
+                courtType: '专业地胶',
+                parking: '¥6/小时，体育馆地下车库',
+                facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi', '器材租赁', '运动用品店', '自动售货机'],
+                ratings: { court: 4.7, light: 4.6, service: 4.6, value: 4.7 },
+                reviews: [
+                    { name: '长沙球友', avatar: '毛', level: '4.5级玩家 · 已打35+次', stars: 5, content: '贺龙体育馆地理位置好，市中心交通方便。场地专业，地胶质量好。价格合理，性价比高。推荐！', tags: ['位置好', '场地专业', '性价比高'] },
+                    { name: '天心区上班族', avatar: '龙', level: '4.0级玩家 · 已打20次', stars: 4, content: '下班过来打球很方便，地铁直达。场地维护得不错，灯光也行。周末人多，建议提前预约。', tags: ['交通便利', '需预约', '场地不错'] },
+                    { name: '湘江球友', avatar: '谭', level: '3.5级玩家 · 已打12次', stars: 5, content: '贺龙体育馆老牌子了，场地质量有保障。服务人员热情，淋浴设施完善。价格亲民。', tags: ['老牌子', '服务好', '价格亲民'] }
+                ]
+            },
+            'zhengzhou1': {
+                name: '郑州奥林匹克体育中心羽毛球馆',
+                icon: '🏛️',
+                rating: 4.5,
+                reviewCount: 187,
+                location: '中原区西四环奥体中心内',
+                subway: '地铁6号线/14号线奥体中心站B口出，步行约400米',
+                tags: ['场地宽敞', '价格实惠', '停车方便'],
+                courtCount: '24片场地',
+                price: 55,
+                businessHours: '09:00 - 22:00',
+                courtType: 'PVC地胶',
+                parking: '¥4/小时，奥体中心超大停车场',
+                facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi', '器材租赁', '自动售货机', '小卖部'],
+                ratings: { court: 4.5, light: 4.4, service: 4.4, value: 4.8 },
+                reviews: [
+                    { name: '郑州球友', avatar: '郭', level: '4.0级玩家 · 已打30+次', stars: 5, content: '郑州奥体中心的场地特别多，24片，场地宽敞。价格实惠，性价比超高。停车方便，地铁直达。推荐！', tags: ['场地多', '价格实惠', '停车方便'] },
+                    { name: '中原区上班族', avatar: '何', level: '3.5级玩家 · 已打18次', stars: 4, content: '新建的奥体中心，设施不错。场地够用，工作日基本不用等。地胶稍微有点滑，新手注意。', tags: ['设施新', '工作日空位多', '地胶偏滑'] },
+                    { name: '河南羽球爱好者', avatar: '宋', level: '3.0级玩家 · 已打10次', stars: 4, content: '在西四环这边，离市区有点远，但胜在场地多价格便宜。自驾来很方便，停车场大。', tags: ['价格便宜', '适合自驾', '场地多'] }
+                ]
+            },
+            'dongguan1': {
+                name: '东莞羽毛球中心',
+                icon: '🏙️',
+                rating: 4.8,
+                reviewCount: 298,
+                location: '南城区体育路东莞体育中心内',
+                subway: '暂无直达地铁，建议公交或自驾前往',
+                tags: ['专业地胶', '灯光一流', '服务周到'],
+                courtCount: '30片场地',
+                price: 70,
+                businessHours: '08:00 - 22:30',
+                courtType: '赛事级专业地胶',
+                parking: '¥5/小时，体育中心大型停车场',
+                facilities: ['豪华更衣室', '淋浴间', '观赛休息区', '免费WiFi', '专业器材', '运动用品店', '咖啡厅'],
+                ratings: { court: 4.9, light: 4.9, service: 4.7, value: 4.8 },
+                reviews: [
+                    { name: '东莞球友', avatar: '袁', level: '4.5级玩家 · 已打45+次', stars: 5, content: '东莞羽毛球中心是东莞最大的球馆了，30片场地！赛事级地胶，灯光一流。价格亲民，性价比超高。强烈推荐！', tags: ['场地多', '地胶专业', '性价比高'] },
+                    { name: '南城上班族', avatar: '方', level: '4.0级玩家 · 已打25次', stars: 5, content: '在体育路这边，下班过来很方便。场地质量一流，服务周到。停车方便，价格合理。', tags: ['场地一流', '服务好', '停车方便'] },
+                    { name: '广东羽球爱好者', avatar: '曹', level: '3.5级玩家 · 已打15次', stars: 4, content: '场地多就是好，基本不用等位。地胶专业，脚感好。就是没有地铁直达，自驾或公交来。', tags: ['不用等位', '地胶好', '无地铁'] }
+                ]
+            },
+            'fuzhou1': {
+                name: '福州海峡奥体中心羽毛球馆',
+                icon: '🌳',
+                rating: 4.6,
+                reviewCount: 192,
+                location: '仓山区福湾路海峡奥体中心内',
+                subway: '地铁5号线凤山路站B口出，步行约500米',
+                tags: ['环境优美', '设施齐全', '空气流通'],
+                courtCount: '16片场地',
+                price: 65,
+                businessHours: '09:00 - 22:00',
+                courtType: '专业地胶',
+                parking: '¥5/小时，奥体中心停车场',
+                facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi', '器材租赁', '自动售货机', '小卖部'],
+                ratings: { court: 4.6, light: 4.6, service: 4.5, value: 4.7 },
+                reviews: [
+                    { name: '福州球友', avatar: '林', level: '4.0级玩家 · 已打28+次', stars: 5, content: '海峡奥体中心环境优美，空气流通好，打球不闷。场地专业，设施齐全。价格合理，推荐！', tags: ['环境优美', '设施齐全', '空气好'] },
+                    { name: '仓山上班族', avatar: '陈', level: '3.5级玩家 · 已打18次', stars: 4, content: '在仓山这边，下班过来打球方便。场地维护得不错，灯光也行。周末人多，建议提前预约。', tags: ['交通便利', '需预约', '场地不错'] },
+                    { name: '榕城羽球爱好者', avatar: '黄', level: '3.0级玩家 · 已打10次', stars: 4, content: '奥体中心的设施比较新，场地宽敞。淋浴设施完善，服务也还行。性价比不错。', tags: ['设施新', '场地宽敞', '性价比不错'] }
+                ]
+            },
+            'xiamen1': {
+                name: '厦门体育中心羽毛球馆',
+                icon: '🌴',
+                rating: 4.7,
+                reviewCount: 213,
+                location: '思明区体育路2号厦门体育中心内',
+                subway: '地铁2号线体育中心站3口出，步行约300米',
+                tags: ['海景视野', '交通便利', '停车方便'],
+                courtCount: '12片场地',
+                price: 75,
+                businessHours: '08:00 - 22:00',
+                courtType: '专业地胶',
+                parking: '¥5/小时，体育中心停车场',
+                facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi', '器材租赁', '运动用品店', '自动售货机'],
+                ratings: { court: 4.7, light: 4.7, service: 4.6, value: 4.6 },
+                reviews: [
+                    { name: '厦门球友', avatar: '曾', level: '4.5级玩家 · 已打30+次', stars: 5, content: '厦门体育中心在思明区，交通方便，地铁直达。场地专业，海景视野好。停车方便，价格合理。推荐！', tags: ['交通便利', '场地专业', '停车方便'] },
+                    { name: '思明上班族', avatar: '洪', level: '4.0级玩家 · 已打20次', stars: 4, content: '下班过来打球很方便，场地质量不错。就是场地数量不多，晚上要提前订。环境好，性价比高。', tags: ['场地好', '需提前订', '性价比高'] },
+                    { name: '鹭岛羽球爱好者', avatar: '蔡', level: '3.5级玩家 · 已打12次', stars: 5, content: '在厦门岛内，位置好。地胶专业，脚感舒适。服务人员热情，淋浴完善。会常来。', tags: ['位置好', '地胶专业', '服务好'] }
+                ]
+            }
+        };
+
+        function openCourtDetail(id, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+
+            const modal = document.getElementById('court-modal');
+            if (!modal) return;
+
+            const card = document.querySelector(`.court-card[onclick*="openCourtDetail('${id}')"]`);
+            const court = courtDetails[id];
+
+            let courtData;
+            if (court) {
+                courtData = court;
+            } else if (card) {
+                const nameEl = card.querySelector('.court-name');
+                const ratingEl = card.querySelector('.court-rating');
+                const locationEl = card.querySelector('.court-location');
+                const priceEl = card.querySelector('.price');
+                const tagEls = card.querySelectorAll('.court-tags .tag');
+                const iconEl = card.querySelector('.court-image');
+
+                const tags = [];
+                tagEls.forEach(tag => tags.push(tag.textContent));
+
+                courtData = {
+                    name: nameEl ? nameEl.textContent : '羽毛球馆',
+                    icon: iconEl ? iconEl.textContent.trim().charAt(0) : '🏸',
+                    rating: ratingEl ? parseFloat(ratingEl.textContent) || 4.5 : 4.5,
+                    reviewCount: Math.floor(Math.random() * 200) + 50,
+                    location: locationEl ? locationEl.textContent.replace('📍 ', '') : '地址待补充',
+                    subway: '交通信息待补充',
+                    tags: tags.length > 0 ? tags : ['专业场地', '交通便利'],
+                    courtCount: tags.find(t => t.includes('片')) || '若干片场地',
+                    price: priceEl ? parseInt(priceEl.textContent.replace(/\D/g, '')) || 80 : 80,
+                    businessHours: '09:00 - 22:00',
+                    courtType: '专业地胶',
+                    parking: '请到店咨询',
+                    facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi'],
+                    ratings: { court: 4.5, light: 4.5, service: 4.5, value: 4.5 },
+                    reviews: [
+                        { name: '球友1', avatar: '球', level: '3.5级玩家', stars: 5, content: '场地还不错，值得推荐！', tags: ['场地好', '性价比高'] },
+                        { name: '球友2', avatar: '友', level: '4.0级玩家', stars: 4, content: '整体体验还可以，有机会还会再来。', tags: ['环境不错'] }
+                    ]
+                };
+            } else if (typeof id === 'string' && id.indexOf('user_') === 0) {
+                // 用户添加的球馆：从 localStorage 加载
+                try {
+                    const userCourts = JSON.parse(localStorage.getItem('myAddedCourts') || '[]');
+                    const uc = userCourts.find(c => String(c.id) === String(id.substring(5)));
+                    if (uc) {
+                        courtData = {
+                            name: uc.name,
+                            icon: '🏸',
+                            rating: 4.5,
+                            reviewCount: Math.floor(Math.random() * 100) + 20,
+                            location: uc.address || '地址待补充',
+                            subway: '交通信息待补充',
+                            tags: (uc.facilities && uc.facilities.length > 0) ? uc.facilities : ['用户推荐'],
+                            courtCount: uc.courtCount || '若干片场地',
+                            price: uc.price || 60,
+                            businessHours: '09:00 - 22:00',
+                            courtType: '专业地胶',
+                            parking: '请到店咨询',
+                            facilities: ['更衣室', '淋浴间', '休息区', '免费WiFi'],
+                            ratings: { court: 4.5, light: 4.5, service: 4.5, value: 4.5 },
+                            reviews: []
+                        };
+                    }
+                } catch (e) {
+                    console.error('加载用户球馆详情失败:', e);
+                }
+            }
+
+            if (!courtData) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                return;
+            }
+
+            const headerIcon = modal.querySelector('.modal-header');
+            if (headerIcon) {
+                const iconNode = headerIcon.childNodes[0];
+                if (iconNode) iconNode.textContent = courtData.icon;
+            }
+
+            const titleEl = modal.querySelector('.modal-title h2');
+            if (titleEl) titleEl.textContent = courtData.name;
+
+            const ratingTitleEl = modal.querySelector('.modal-title .court-rating');
+            if (ratingTitleEl) {
+                ratingTitleEl.innerHTML = `⭐ ${courtData.rating} <span style="font-size: 0.85rem; color: #888; font-weight: normal;">(${courtData.reviewCount}条评价)</span>`;
+            }
+
+            const locationModalEl = modal.querySelector('.modal-location');
+            if (locationModalEl) {
+                locationModalEl.innerHTML = `📍 ${courtData.location}<br>🚇 ${courtData.subway}`;
+            }
+
+            const tagsModalEl = modal.querySelector('.modal-tags');
+            if (tagsModalEl) {
+                let tagsHtml = '';
+                courtData.tags.forEach(tag => {
+                    tagsHtml += `<span class="tag good">${tag}</span>`;
+                });
+                tagsHtml += `<span class="tag info">${courtData.courtCount}</span>`;
+                tagsHtml += `<span class="tag">¥${courtData.price}/小时 起</span>`;
+                tagsModalEl.innerHTML = tagsHtml;
+            }
+
+            const infoGrid = modal.querySelector('.info-grid');
+            if (infoGrid) {
+                infoGrid.innerHTML = `
+                    <div class="info-item">
+                        <div class="label">营业时间</div>
+                        <div class="value">${courtData.businessHours}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">场地数量</div>
+                        <div class="value">${courtData.courtCount}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">场地类型</div>
+                        <div class="value">${courtData.courtType}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">停车信息</div>
+                        <div class="value">${courtData.parking}</div>
+                    </div>
+                `;
+            }
+
+            const sections = modal.querySelectorAll('.modal-section');
+            if (sections[1]) {
+                let facilitiesHtml = '<div style="display: flex; flex-wrap: wrap; gap: 10px;">';
+                courtData.facilities.forEach(f => {
+                    facilitiesHtml += `<span class="tag info">${f}</span>`;
+                });
+                facilitiesHtml += '</div>';
+                sections[1].innerHTML = `<h3>🛠️ 配套设施</h3>${facilitiesHtml}`;
+            }
+
+            const ratingGrid = modal.querySelector('.rating-grid');
+            if (ratingGrid) {
+                ratingGrid.innerHTML = `
+                    <div class="rating-item">
+                        <div class="score">${courtData.ratings.court}</div>
+                        <div class="label">场地质量</div>
+                    </div>
+                    <div class="rating-item">
+                        <div class="score">${courtData.ratings.light}</div>
+                        <div class="label">灯光环境</div>
+                    </div>
+                    <div class="rating-item">
+                        <div class="score">${courtData.ratings.service}</div>
+                        <div class="label">服务态度</div>
+                    </div>
+                    <div class="rating-item">
+                        <div class="score">${courtData.ratings.value}</div>
+                        <div class="label">性价比</div>
+                    </div>
+                `;
+            }
+
+            const reviewList = modal.querySelector('.review-list');
+            const reviewSection = reviewList ? reviewList.closest('.modal-section') : null;
+            if (reviewSection) {
+                let reviewsHtml = '';
+                courtData.reviews.forEach(review => {
+                    let stars = '';
+                    for (let i = 0; i < review.stars; i++) stars += '⭐';
+                    let reviewTagsHtml = '';
+                    review.tags.forEach(tag => {
+                        reviewTagsHtml += `<span class="review-tag">${tag}</span>`;
+                    });
+                    reviewsHtml += `
+                        <div class="review-item">
+                            <div class="review-header">
+                                <div class="review-user">
+                                    <div class="user-avatar">${review.avatar}</div>
+                                    <div class="user-info">
+                                        <div class="name">${review.name}</div>
+                                        <div class="level">${review.level}</div>
+                                    </div>
+                                </div>
+                                <span style="color:var(--primary-color);">${stars}</span>
+                            </div>
+                            <div class="review-content">${review.content}</div>
+                            <div class="review-tags">${reviewTagsHtml}</div>
+                        </div>
+                    `;
+                });
+                reviewSection.innerHTML = `
+                    <h3>💬 最新评价 (${courtData.reviewCount})</h3>
+                    <div class="review-list">${reviewsHtml}</div>
+                `;
+            }
+
+            const bookBtn = modal.querySelector('.btn-book');
+            if (bookBtn) {
+                bookBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    openBookModalFromDetail();
+                };
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            const courtModal = document.getElementById('court-modal');
+            if (courtModal) courtModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        const cityDistrictMap = {
+            'beijing': ['朝阳区', '海淀区', '东城区', '西城区', '丰台区', '通州区', '顺义区', '昌平区'],
+            'shanghai': ['浦东新区', '徐汇区', '黄浦区', '静安区', '长宁区', '普陀区', '闵行区', '杨浦区'],
+            'shenzhen': ['南山区', '福田区', '罗湖区', '宝安区', '龙岗区', '龙华区', '光明区', '坪山区'],
+            'guangzhou': ['天河区', '越秀区', '海珠区', '白云区', '番禺区', '黄埔区', '花都区', '南沙区'],
+            'chengdu': ['锦江区', '青羊区', '武侯区', '成华区', '金牛区', '高新区', '双流区', '郫都区'],
+            'hangzhou': ['西湖区', '拱墅区', '江干区', '滨江区', '余杭区', '萧山区', '富阳区', '临安区'],
+            'wuhan': ['武昌区', '汉口区', '汉阳区', '洪山区', '青山区', '江岸区', '江汉区', '硚口区'],
+            'nanjing': ['建邺区', '玄武区', '鼓楼区', '秦淮区', '栖霞区', '雨花台区', '江宁区', '浦口区'],
+            'xian': ['碑林区', '雁塔区', '未央区', '莲湖区', '新城区', '灞桥区', '长安区', '临潼区'],
+            'chongqing': ['渝北区', '渝中区', '江北区', '南岸区', '九龙坡区', '沙坪坝区', '巴南区', '北碚区'],
+            'tianjin': ['河西区', '和平区', '河东区', '南开区', '红桥区', '东丽区', '西青区', '北辰区'],
+            'suzhou': ['工业园区', '姑苏区', '虎丘区', '吴中区', '相城区', '吴江区', '昆山市', '常熟市'],
+            'qingdao': ['市南区', '市北区', '崂山区', '黄岛区', '城阳区', '李沧区', '即墨区', '胶州市'],
+            'changsha': ['岳麓区', '芙蓉区', '天心区', '开福区', '雨花区', '望城区', '长沙县', '浏阳市'],
+            'zhengzhou': ['金水区', '二七区', '中原区', '管城回族区', '惠济区', '上街区', '新郑市', '荥阳市'],
+            'dongguan': ['南城街道', '东城街道', '莞城街道', '万江街道', '虎门镇', '长安镇', '厚街镇', '塘厦镇'],
+            'fuzhou': ['鼓楼区', '台江区', '仓山区', '晋安区', '马尾区', '长乐区', '福清市', '闽侯县'],
+            'xiamen': ['思明区', '湖里区', '海沧区', '集美区', '同安区', '翔安区']
+        };
+
+        const locationCityMap = {
+            'beijing': '北京市',
+            'shanghai': '上海市',
+            'guangzhou': '广州市',
+            'shenzhen': '深圳市',
+            'chengdu': '成都市',
+            'hangzhou': '杭州市',
+            'wuhan': '武汉市',
+            'nanjing': '南京市',
+            'xian': '西安市',
+            'chongqing': '重庆市',
+            'tianjin': '天津市',
+            'suzhou': '苏州市',
+            'qingdao': '青岛市',
+            'changsha': '长沙市',
+            'zhengzhou': '郑州市',
+            'dongguan': '东莞市',
+            'fuzhou': '福州市',
+            'xiamen': '厦门市'
+        };
+
+        const ipLocationCache = {};
+
+        function getCurrentLocation() {
+            const btn = document.querySelector('.location-btn');
+            btn.classList.add('loading');
+            btn.innerHTML = '<span class="location-icon">📍</span><span>定位中...</span>';
+            
+            if (navigator.geolocation) {
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                };
+                
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        const accuracy = position.coords.accuracy;
+                        
+                        showToast(`📍 定位成功，精度: ${Math.round(accuracy)}米`, 'info');
+                        reverseGeocode(lat, lng);
+                    },
+                    function(error) {
+                        const errorMessages = {
+                            1: '用户拒绝了定位权限',
+                            2: '无法获取位置信息',
+                            3: '定位超时，请重试'
+                        };
+                        showToast(errorMessages[error.code] || '定位失败', 'warning');
+                        fallbackToIPLocation();
+                    },
+                    options
+                );
+            } else {
+                showToast('您的浏览器不支持定位', 'warning');
+                fallbackToIPLocation();
+            }
+        }
+
+        function reverseGeocode(lat, lng) {
+            const btn = document.querySelector('.location-btn');
+            
+            const url = `https://restapi.amap.com/v3/geocode/regeo?key=您的高德API密钥&location=${lng},${lat}&radius=1000&extensions=all`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.regeocode && data.regeocode.addressComponent) {
+                        const addr = data.regeocode.addressComponent;
+                        const city = addr.city || addr.province;
+                        const district = addr.district || addr.city;
+                        
+                        if (city) {
+                            updateLocationDisplay(city, district);
+                            return;
+                        }
+                    }
+                    fallbackToIPLocation();
+                })
+                .catch(() => {
+                    fallbackToIPLocation();
+                });
+        }
+
+        function fallbackToIPLocation() {
+            const btn = document.querySelector('.location-btn');
+            
+            fetch('https://api.ipgeolocation.io/ipgeo?apiKey=free')
+                .then(response => response.json())
+                .then(data => {
+                    const city = data.city || data.state_prov;
+                    const district = data.district || '';
+                    if (city) {
+                        updateLocationDisplay(city, district);
+                    } else {
+                        btn.classList.remove('loading');
+                        btn.innerHTML = '<span class="location-icon">📍</span><span>定位失败</span>';
+                        showToast('无法通过IP定位，将显示默认城市', 'warning');
+                    }
+                })
+                .catch(() => {
+                    btn.classList.remove('loading');
+                    btn.innerHTML = '<span class="location-icon">📍</span><span>定位失败</span>';
+                    showToast('定位服务暂时不可用', 'error');
+                });
+        }
+
+        function updateLocationDisplay(cityName, districtName) {
+            const btn = document.querySelector('.location-btn');
+            btn.classList.remove('loading');
+            btn.innerHTML = '<span class="location-icon">📍</span><span>已定位</span>';
+            
+            let matchedCity = null;
+            let matchedDistrict = districtName || '全部';
+            
+            for (const [key, value] of Object.entries(locationCityMap)) {
+                if (cityName.includes(value.replace('市', '')) || value.includes(cityName.replace('市', ''))) {
+                    matchedCity = key;
+                    break;
+                }
+            }
+            
+            if (!matchedCity) {
+                matchedCity = 'beijing';
+                showToast(`未找到城市 "${cityName}"，已切换到北京`, 'info');
+            }
+            
+            const cityInfo = cityDistricts[matchedCity];
+            if (cityInfo) {
+                const locationDisplay = document.getElementById('location-display');
+                if (locationDisplay) locationDisplay.textContent = cityInfo.name + ' · ' + matchedDistrict;
+            }
+            
+            switchCity(matchedCity);
+            showToast(`📍 已定位到 ${cityInfo ? cityInfo.name : cityName}`, 'success');
+        }
+
+        let bookPrice = 80;
+        let bookDuration = 1;
+        let selectedStartTime = null;
+
+        function openBookModal(btn, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+
+            if (!btn) {
+                alert('错误：未获取到按钮');
+                return;
+            }
+
+            const card = btn.closest('.court-card');
+            if (!card) {
+                alert('错误：未找到球馆卡片');
+                return;
+            }
+
+            const nameEl = card.querySelector('.court-name');
+            const addressEl = card.querySelector('.court-address') || card.querySelector('.court-location');
+            const priceEl = card.querySelector('.price');
+
+            if (!nameEl || !addressEl || !priceEl) {
+                alert('错误：球馆信息不完整 (name=' + !!nameEl + ', address=' + !!addressEl + ', price=' + !!priceEl + ')');
+                return;
+            }
+
+            const name = nameEl.textContent;
+            const address = addressEl.textContent;
+            const priceText = priceEl.textContent;
+            const price = parseInt(priceText.replace(/\D/g, '')) || 80;
+            bookPrice = price;
+
+            const infoHtml = `
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;">
+                    <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 8px; color: #f9d423;">${name}</div>
+                    <div style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">📍 ${address}</div>
+                    <div style="color: #2ecc71; margin-top: 5px; font-weight: bold;">¥${price}/小时 起</div>
+                </div>
+            `;
+
+            const bookCourtInfo = document.getElementById('book-court-info');
+            const bookDate = document.getElementById('book-date');
+            const bookModal = document.getElementById('book-modal');
+
+            if (!bookCourtInfo) { alert('错误：找不到 book-court-info'); return; }
+            if (!bookDate) { alert('错误：找不到 book-date'); return; }
+            if (!bookModal) { alert('错误：找不到 book-modal'); return; }
+
+            bookCourtInfo.innerHTML = infoHtml;
+
+            const today = new Date().toISOString().split('T')[0];
+            bookDate.value = today;
+            bookDate.min = today;
+
+            generateTimeSlots();
+
+            bookDuration = 1;
+            selectedStartTime = null;
+            document.querySelectorAll('.duration-btn').forEach((dbtn, idx) => {
+                dbtn.classList.toggle('active', idx === 0);
+            });
+            const courtTypeSelect = document.getElementById('book-court-type');
+            if (courtTypeSelect) courtTypeSelect.value = '普通场地';
+
+            updateBookPrice();
+
+            bookModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeBookModal() {
+            const bookModal = document.getElementById('book-modal');
+            if (bookModal) bookModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function generateTimeSlots() {
+            const container = document.getElementById('book-start-time');
+            container.innerHTML = '';
+            const times = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
+            
+            times.forEach(time => {
+                const btn = document.createElement('button');
+                btn.style.cssText = 'padding: 10px 5px; border-radius: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; cursor: pointer; font-size: 0.85rem;';
+                btn.textContent = time;
+                btn.onclick = function() {
+                    document.querySelectorAll('#book-start-time button').forEach(b => {
+                        b.style.background = 'rgba(255,255,255,0.1)';
+                        b.style.borderColor = 'rgba(255,255,255,0.2)';
+                    });
+                    this.style.background = 'linear-gradient(135deg, #f9d423, #ff4e50)';
+                    this.style.borderColor = 'transparent';
+                    selectedStartTime = time;
+                    updateBookPrice();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function selectDuration(btn, duration) {
+            document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            bookDuration = duration;
+            updateBookPrice();
+        }
+
+        function updateBookPrice() {
+            const courtType = document.getElementById('book-court-type').value;
+            let pricePerHour = bookPrice;
+            
+            if (courtType === 'VIP场地') {
+                pricePerHour += 30;
+            } else if (courtType === '训练场地') {
+                pricePerHour -= 10;
+            }
+            
+            const total = pricePerHour * bookDuration;
+            const priceResult = document.getElementById('book-price-result');
+            const totalPriceEl = document.getElementById('book-total-price');
+            if (priceResult) priceResult.textContent = '¥' + pricePerHour + '/小时';
+            if (totalPriceEl) totalPriceEl.textContent = '¥' + total;
+        }
+
+        function submitBook() {
+            const date = document.getElementById('book-date').value;
+            const courtType = document.getElementById('book-court-type').value;
+
+            if (!date) {
+                showToast('请选择预约日期', 'warning');
+                return;
+            }
+            if (!selectedStartTime) {
+                showToast('请选择开始时间', 'warning');
+                return;
+            }
+
+            const btn = document.querySelector('#book-modal .btn-primary');
+            const originalText = btn.textContent;
+            btn.textContent = '🔄 正在提交预约...';
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+
+            setTimeout(() => {
+                const infoContainer = document.querySelector('#book-court-info > div');
+                let courtName = '球馆';
+                let courtAddress = '';
+
+                if (infoContainer) {
+                    const nameEl = infoContainer.querySelector('div:first-child');
+                    const addrEl = infoContainer.querySelector('div:nth-child(2)');
+                    if (nameEl) courtName = nameEl.textContent.trim();
+                    if (addrEl) courtAddress = addrEl.textContent.trim().replace('📍 ', '');
+                }
+
+                const totalPrice = document.getElementById('book-total-price').textContent;
+
+                closeBookModal();
+                btn.textContent = originalText;
+                btn.disabled = false;
+                btn.style.opacity = '1';
+
+                showBookSuccessModal({
+                    name: courtName,
+                    address: courtAddress,
+                    date: date,
+                    startTime: selectedStartTime,
+                    duration: bookDuration,
+                    courtType: courtType,
+                    totalPrice: totalPrice
+                });
+            }, 1500);
+        }
+
+        function showBookSuccessModal(info) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.id = 'book-success-modal';
+            modal.style.zIndex = '2000';
+
+            const [h, m] = info.startTime.split(':').map(Number);
+            const endHour = (h + info.duration);
+            const endTime = String(endHour).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+
+            const orderId = 'YQ' + Date.now().toString().slice(-10);
+
+            const bookingRecord = {
+                orderId: orderId,
+                name: info.name,
+                address: info.address,
+                date: info.date,
+                startTime: info.startTime,
+                endTime: endTime,
+                duration: info.duration,
+                courtType: info.courtType,
+                totalPrice: info.totalPrice,
+                status: '待使用',
+                createTime: Date.now()
+            };
+
+            let existingBookings = [];
+            try {
+                existingBookings = JSON.parse(localStorage.getItem('myCourtBookings') || '[]');
+                if (!Array.isArray(existingBookings)) existingBookings = [];
+            } catch (e) {
+                console.error('预约数据解析失败:', e);
+                existingBookings = [];
+            }
+            existingBookings.push(bookingRecord);
+            localStorage.setItem('myCourtBookings', JSON.stringify(existingBookings));
+
+            modal.innerHTML = `
+                <div class="modal" style="max-width: 480px; text-align: center; padding: 35px 30px; background: linear-gradient(135deg, rgba(20,30,40,0.98) 0%, rgba(30,50,60,0.98) 100%);">
+                    <div style="width: 80px; height: 80px; margin: 0 auto 20px; background: linear-gradient(135deg, #2ecc71, #27ae60); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; box-shadow: 0 0 30px rgba(46,204,113,0.5); animation: scaleIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);">
+                        ✓
+                    </div>
+                    <h2 style="color: #2ecc71; font-size: 1.6rem; margin-bottom: 10px;">预约成功！</h2>
+                    <p style="color: rgba(255,255,255,0.7); font-size: 0.95rem; margin-bottom: 25px;">请按时到达球馆，享受您的运动时光</p>
+
+                    <div style="background: rgba(255,255,255,0.05); border-radius: 15px; padding: 20px; margin-bottom: 20px; text-align: left;">
+                        <div style="border-bottom: 1px dashed rgba(255,255,255,0.15); padding-bottom: 12px; margin-bottom: 12px;">
+                            <div style="color: #f9d423; font-size: 1.1rem; font-weight: bold; margin-bottom: 5px;">${info.name}</div>
+                            <div style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">📍 ${info.address}</div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.9rem;">
+                            <div>
+                                <div style="color: #888; font-size: 0.8rem;">预约日期</div>
+                                <div style="color: #fff; margin-top: 3px;">${info.date}</div>
+                            </div>
+                            <div>
+                                <div style="color: #888; font-size: 0.8rem;">场地类型</div>
+                                <div style="color: #fff; margin-top: 3px;">${info.courtType}</div>
+                            </div>
+                            <div>
+                                <div style="color: #888; font-size: 0.8rem;">开始时间</div>
+                                <div style="color: #fff; margin-top: 3px;">${info.startTime}</div>
+                            </div>
+                            <div>
+                                <div style="color: #888; font-size: 0.8rem;">结束时间</div>
+                                <div style="color: #fff; margin-top: 3px;">${endTime}</div>
+                            </div>
+                            <div>
+                                <div style="color: #888; font-size: 0.8rem;">时长</div>
+                                <div style="color: #fff; margin-top: 3px;">${info.duration}小时</div>
+                            </div>
+                            <div>
+                                <div style="color: #888; font-size: 0.8rem;">总费用</div>
+                                <div style="color: #f9d423; font-weight: bold; margin-top: 3px;">${info.totalPrice}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(249, 212, 35, 0.1); border: 1px solid rgba(249, 212, 35, 0.3); border-radius: 10px; padding: 12px; margin-bottom: 20px; font-size: 0.85rem; color: #f9d423;">
+                        🎫 订单号：<b>${orderId}</b>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="closeBookSuccessModal()" style="flex: 1; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #fff; font-size: 0.95rem; cursor: pointer;">关闭</button>
+                        <button onclick="viewMyBookings('${orderId}')" style="flex: 1; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(135deg, #f9d423, #ff4e50); color: #fff; font-size: 0.95rem; font-weight: bold; cursor: pointer;">查看我的预约</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            document.body.style.overflow = 'hidden';
+
+            showToast('预约成功！订单已保存', 'success');
+        }
+
+        function closeBookSuccessModal() {
+            const modal = document.getElementById('book-success-modal');
+            if (modal) {
+                modal.remove();
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function viewMyBookings(orderId) {
+            closeBookSuccessModal();
+            // 显示"我的预约"列表弹窗
+            showMyBookingsModal(orderId);
+        }
+
+        function showMyBookingsModal(newOrderId) {
+            // 从 localStorage 获取已保存的预约
+            let bookings = [];
+            try {
+                bookings = JSON.parse(localStorage.getItem('myCourtBookings') || '[]');
+                if (!Array.isArray(bookings)) bookings = [];
+            } catch (e) {
+                console.error('预约数据解析失败:', e);
+                bookings = [];
+            }
+
+            // 如果新订单不在列表中，添加进去
+            if (newOrderId && !bookings.find(b => b.orderId === newOrderId)) {
+                // 通过成功弹窗中的信息重建
+                // 实际应用中应从后端获取
+            }
+
+            // 如果没有任何预约，添加几个示例
+            if (bookings.length === 0) {
+                bookings = [
+                    { orderId: 'YQ' + (Date.now() - 86400000).toString().slice(-10), name: '朝阳体育中心羽毛球馆', date: '2026-06-25', startTime: '19:00', duration: 2, courtType: '普通场地', totalPrice: '¥160', status: '待使用' },
+                    { orderId: 'YQ' + (Date.now() - 172800000).toString().slice(-10), name: '奥体中心羽毛球馆', date: '2026-06-20', startTime: '20:00', duration: 1.5, courtType: 'VIP场地', totalPrice: '¥210', status: '已完成' }
+                ];
+            }
+
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.id = 'my-bookings-modal';
+            modal.style.zIndex = '2000';
+
+            const bookingsHtml = bookings.map(b => `
+                <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 15px; margin-bottom: 12px; border-left: 3px solid ${b.status === '待使用' ? '#f9d423' : '#2ecc71'};">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                        <div style="color: var(--primary-color); font-weight: bold; font-size: 1rem;">${b.name}</div>
+                        <div style="background: ${b.status === '待使用' ? 'rgba(249,212,35,0.2)' : 'rgba(46,204,113,0.2)'}; color: ${b.status === '待使用' ? '#f9d423' : '#2ecc71'}; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem;">${b.status}</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85rem; color: rgba(255,255,255,0.75);">
+                        <div>📅 ${b.date}</div>
+                        <div>⏰ ${b.startTime} (${b.duration}小时)</div>
+                        <div>🏸 ${b.courtType}</div>
+                        <div>💰 ${b.totalPrice}</div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 0.75rem; color: #888;">订单号：${b.orderId}</div>
+                </div>
+            `).join('');
+
+            modal.innerHTML = `
+                <div class="modal" style="max-width: 550px; max-height: 80vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        📋 我的预约
+                        <div class="close-btn" onclick="document.getElementById('my-bookings-modal').remove(); document.body.style.overflow='auto';">✕</div>
+                    </div>
+                    <div class="modal-body" style="padding: 20px;">
+                        <div style="margin-bottom: 15px; color: rgba(255,255,255,0.7); font-size: 0.9rem;">共 <b style="color: var(--primary-color);">${bookings.length}</b> 条预约记录</div>
+                        ${bookingsHtml}
+                        <button onclick="document.getElementById('my-bookings-modal').remove(); document.body.style.overflow='auto';" style="width: 100%; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(135deg, #f9d423, #ff4e50); color: #fff; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px;">关闭</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function cancelBooking(orderId) {
+            if (!confirm('确定要取消这个预约吗？')) return;
+            try {
+                let bookings = JSON.parse(localStorage.getItem('myCourtBookings') || '[]');
+                bookings = bookings.filter(b => b.orderId !== orderId);
+                localStorage.setItem('myCourtBookings', JSON.stringify(bookings));
+                const existing = document.getElementById('my-bookings-modal');
+                if (existing) existing.remove();
+                showToast('预约已取消', 'success');
+                showMyBookingsModal();
+            } catch(e) {
+                showToast('取消预约失败', 'error');
+            }
+        }
+
+        function showBookToast(message, type = 'success') {
+            // 移除已存在的 toast
+            document.querySelectorAll('.book-toast').forEach(t => t.remove());
+
+            const toast = document.createElement('div');
+            toast.className = 'book-toast';
+            const bgColor = type === 'success' ? 'rgba(46, 204, 113, 0.95)' :
+                            type === 'error' ? 'rgba(231, 76, 60, 0.95)' :
+                            'rgba(96, 165, 250, 0.95)';
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+
+            toast.style.cssText = `position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: ${bgColor}; color: #fff; padding: 12px 24px; border-radius: 25px; z-index: 9999; font-size: 0.95rem; box-shadow: 0 4px 20px rgba(0,0,0,0.3); animation: toastSlideDown 0.3s ease;`;
+            toast.textContent = icon + ' ' + message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'toastSlideUp 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        function openAreaModal() {
+            document.getElementById('area-modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            const citySelect = document.getElementById('area-city');
+            if (citySelect && currentState.city) {
+                citySelect.value = currentState.city;
+            }
+            updateDistricts();
+            if (currentState.district) {
+                const districtSelect = document.getElementById('area-district');
+                if (districtSelect) {
+                    districtSelect.value = currentState.district;
+                }
+            }
+        }
+        function closeAreaModal() {
+            const areaModal = document.getElementById('area-modal');
+            if (areaModal) areaModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        function updateDistricts() {
+            const citySelect = document.getElementById('area-city');
+            const city = citySelect ? citySelect.value : '';
+            const districtSelect = document.getElementById('area-district');
+            const districts = cityDistrictMap[city] || [];
+
+            if (!districtSelect) return;
+            districtSelect.innerHTML = '';
+            const allOption = document.createElement('option');
+            allOption.value = '';
+            allOption.textContent = city === 'all' ? '全部地区' : '全部区域';
+            districtSelect.appendChild(allOption);
+
+            districts.forEach(district => {
+                const option = document.createElement('option');
+                option.value = district;
+                option.textContent = district;
+                districtSelect.appendChild(option);
+            });
+        }
+        function confirmArea() {
+            const citySelect = document.getElementById('area-city');
+            const districtSelectEl = document.getElementById('area-district');
+            const city = citySelect ? citySelect.value : '';
+            const district = districtSelectEl ? districtSelectEl.value : '';
+            const cityInfo = cityDistricts[city];
+            const locationDisplay = document.getElementById('location-display');
+
+            if (city === 'all') {
+                if (locationDisplay) locationDisplay.textContent = '📍 全国 · ' + (district || '全部地区');
+            } else if (cityInfo) {
+                if (locationDisplay) locationDisplay.textContent = '📍 ' + cityInfo.name + ' · ' + (district || '全部区域');
+            }
+            closeAreaModal();
+            filterCourtsByDistrict(city, district);
+        }
+        
+        const currentState = {
+            city: 'all',
+            district: '',
+            filterType: 'all',
+            sortType: 'recommend'
+        };
+
+        function extractCourtData(card) {
+            const nameEl = card.querySelector('.court-name');
+            const priceEl = card.querySelector('.price');
+            const ratingEl = card.querySelector('.court-rating');
+            const locationEl = card.querySelector('.court-location');
+            const tagsEl = card.querySelectorAll('.tag');
+            const distanceEl = card.querySelector('.distance');
+            const badgeEl = card.querySelector('.court-badge');
+
+            const price = priceEl ? parseInt(priceEl.textContent.replace(/\D/g, '')) || 999 : 999;
+            const rating = ratingEl ? parseFloat(ratingEl.textContent.replace(/[^0-9.]/g, '')) || 0 : 0;
+            const distance = distanceEl ? parseFloat(distanceEl.textContent.replace(/[^0-9.]/g, '')) || 99 : 99;
+            const tags = [];
+            tagsEl.forEach(t => tags.push(t.textContent.trim()));
+            const locationText = locationEl ? locationEl.textContent : '';
+
+            return {
+                name: nameEl ? nameEl.textContent : '',
+                price: price,
+                rating: rating,
+                distance: distance,
+                tags: tags,
+                location: locationText,
+                isRecommend: badgeEl && badgeEl.textContent.indexOf('热门') > -1,
+                isVip: tags.indexOf('VIP场地') > -1 || tags.indexOf('高端') > -1 || price >= 120,
+                isCheap: price <= 70,
+                isIndoor: tags.indexOf('室内') > -1 || tags.indexOf('专业地胶') > -1 || true,
+                isNearSubway: locationText.indexOf('地铁') > -1 || locationText.indexOf('站') > -1 || tags.indexOf('近地铁') > -1
+            };
+        }
+
+        function applyFiltersAndSort() {
+            const grid = document.getElementById('court-grid');
+            const cards = Array.from(document.querySelectorAll('.court-card'));
+
+            const filtered = cards.filter(card => {
+                if (currentState.city && currentState.city !== 'all' && card.dataset.city !== currentState.city) return false;
+                if (currentState.district && card.dataset.district !== currentState.district) return false;
+
+                const data = extractCourtData(card);
+                switch (currentState.filterType) {
+                    case 'recommend': return data.isRecommend || data.rating >= 4.5;
+                    case 'cheap': return data.isCheap || data.price <= 80;
+                    case 'vip': return data.isVip;
+                    case 'indoor': return data.isIndoor;
+                    case 'near': return data.isNearSubway;
+                    default: return true;
+                }
+            });
+
+            filtered.sort((a, b) => {
+                const da = extractCourtData(a);
+                const db = extractCourtData(b);
+                switch (currentState.sortType) {
+                    case 'price': return da.price - db.price;
+                    case 'rating': return db.rating - da.rating;
+                    case 'distance': return da.distance - db.distance;
+                    case 'recommend':
+                    default:
+                        if (db.isRecommend !== da.isRecommend) return db.isRecommend ? 1 : -1;
+                        return db.rating - da.rating;
+                }
+            });
+
+            cards.forEach(card => card.style.display = 'none');
+            filtered.forEach(card => {
+                card.style.display = 'block';
+                grid.appendChild(card);
+            });
+
+            document.querySelector('.sort-bar span:first-child').textContent = '共找到 ' + filtered.length + ' 家球馆';
+            return filtered.length;
+        }
+
+        function filterCourtsByDistrict(city, district) {
+            currentState.city = city;
+            currentState.district = district || '';
+            applyFiltersAndSort();
+        }
+
+        function filterCourts(type, targetEl) {
+            document.querySelectorAll('.filter-tag').forEach(tag => tag.classList.remove('active'));
+            if (targetEl && targetEl.classList) {
+                targetEl.classList.add('active');
+            } else {
+                const matched = document.querySelector('.filter-tag[data-type="' + type + '"]');
+                if (matched) matched.classList.add('active');
+            }
+            currentState.filterType = type;
+            applyFiltersAndSort();
+            showToast('已切换筛选：' + (targetEl ? targetEl.textContent : type), 'info');
+        }
+
+        function sortCourts(type, targetEl) {
+            document.querySelectorAll('.sort-option').forEach(opt => opt.classList.remove('active'));
+            if (targetEl && targetEl.classList) {
+                targetEl.classList.add('active');
+            } else {
+                const matched = document.querySelector('.sort-option[data-type="' + type + '"]');
+                if (matched) matched.classList.add('active');
+            }
+            currentState.sortType = type;
+            applyFiltersAndSort();
+            showToast('已按' + (targetEl ? targetEl.textContent : type) + '排序', 'info');
+        }
+
+        const cityDistricts = {
+            'beijing': { name: '北京市', district: '朝阳区' },
+            'shanghai': { name: '上海市', district: '浦东新区' },
+            'shenzhen': { name: '深圳市', district: '南山区' },
+            'guangzhou': { name: '广州市', district: '天河区' },
+            'chengdu': { name: '成都市', district: '锦江区' },
+            'hangzhou': { name: '杭州市', district: '西湖区' },
+            'wuhan': { name: '武汉市', district: '武昌区' },
+            'nanjing': { name: '南京市', district: '建邺区' },
+            'xian': { name: '西安市', district: '碑林区' },
+            'chongqing': { name: '重庆市', district: '渝北区' },
+            'tianjin': { name: '天津市', district: '河西区' },
+            'suzhou': { name: '苏州市', district: '工业园区' },
+            'qingdao': { name: '青岛市', district: '市南区' },
+            'changsha': { name: '长沙市', district: '岳麓区' },
+            'zhengzhou': { name: '郑州市', district: '金水区' },
+            'dongguan': { name: '东莞市', district: '南城街道' },
+            'fuzhou': { name: '福州市', district: '鼓楼区' },
+            'xiamen': { name: '厦门市', district: '思明区' }
+        };
+
+        function switchCity(city, targetEl) {
+            document.querySelectorAll('.city-tab').forEach(tab => tab.classList.remove('active'));
+            if (targetEl && targetEl.classList) {
+                targetEl.classList.add('active');
+            } else {
+                const matchedTab = document.querySelector('.city-tab[data-city="' + city + '"]');
+                if (matchedTab) matchedTab.classList.add('active');
+            }
+
+            const cityInfo = cityDistricts[city];
+            const locationDisplay = document.getElementById('location-display');
+            if (city === 'all') {
+                if (locationDisplay) locationDisplay.textContent = '📍 全国 · 全部地区';
+            } else if (cityInfo) {
+                if (locationDisplay) locationDisplay.textContent = '📍 ' + cityInfo.name + ' · ' + cityInfo.district;
+            }
+
+            currentState.city = city;
+            currentState.district = (city === 'all' || !cityInfo) ? '' : cityInfo.district;
+            currentState.filterType = 'all';
+            currentState.sortType = 'recommend';
+
+            document.querySelectorAll('.filter-tag').forEach(tag => {
+                tag.classList.toggle('active', tag.dataset.type === 'all');
+            });
+            document.querySelectorAll('.sort-option').forEach(opt => {
+                opt.classList.toggle('active', opt.dataset.type === 'recommend');
+            });
+
+            const count = applyFiltersAndSort();
+            let cityName = city === 'all' ? '全国' : (cityInfo ? cityInfo.name : city);
+            showToast('已切换到' + cityName + '，共' + count + '家球馆', 'success');
+        }
+
+        function openBookModalFromDetail() {
+            const detailModal = document.getElementById('court-modal');
+            const titleEl = detailModal.querySelector('.modal-title h2');
+            const locationEl = detailModal.querySelector('.modal-location');
+            const tagEls = detailModal.querySelectorAll('.modal-tags .tag');
+
+            let name = '球馆';
+            let address = '';
+            let price = 80;
+
+            if (titleEl) name = titleEl.textContent.trim();
+            if (locationEl) {
+                const lines = locationEl.textContent.trim().split('\n');
+                address = lines[0].replace('📍 ', '').trim();
+            }
+            if (tagEls && tagEls.length > 0) {
+                tagEls.forEach(tag => {
+                    const text = tag.textContent;
+                    const match = text.match(/¥(\d+)/);
+                    if (match) price = parseInt(match[1]);
+                });
+            }
+
+            bookPrice = price;
+
+            const infoHtml = `
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;">
+                    <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 8px; color: #f9d423;">${name}</div>
+                    <div style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">📍 ${address}</div>
+                    <div style="color: #2ecc71; margin-top: 5px; font-weight: bold;">¥${price}/小时 起</div>
+                </div>
+            `;
+
+            const bookCourtInfo = document.getElementById('book-court-info');
+            if (bookCourtInfo) bookCourtInfo.innerHTML = infoHtml;
+
+            const today = new Date().toISOString().split('T')[0];
+            const bookDate = document.getElementById('book-date');
+            if (bookDate) {
+                bookDate.value = today;
+                bookDate.min = today;
+            }
+
+            generateTimeSlots();
+
+            bookDuration = 1;
+            selectedStartTime = null;
+            document.querySelectorAll('.duration-btn').forEach((dbtn, idx) => {
+                dbtn.classList.toggle('active', idx === 0);
+            });
+            const courtTypeSelect = document.getElementById('book-court-type');
+            if (courtTypeSelect) courtTypeSelect.value = '普通场地';
+
+            updateBookPrice();
+
+            const bookModal = document.getElementById('book-modal');
+            if (bookModal) {
+                bookModal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            showToast('正在为您打开预约...', 'info');
+        }
+
+        function showToast(message, type) {
+            if (!type) type = 'info';
+            document.querySelectorAll('.global-toast').forEach(t => t.remove());
+
+            const toast = document.createElement('div');
+            toast.className = 'global-toast';
+            const colors = {
+                success: 'rgba(46, 204, 113, 0.95)',
+                error: 'rgba(231, 76, 60, 0.95)',
+                info: 'rgba(96, 165, 250, 0.95)',
+                warning: 'rgba(251, 191, 36, 0.95)'
+            };
+            const icons = {
+                success: '✅',
+                error: '❌',
+                info: 'ℹ️',
+                warning: '⚠️'
+            };
+
+            toast.style.cssText = `position: fixed; top: 30px; left: 50%; transform: translateX(-50%); background: ${colors[type] || colors.info}; color: #fff; padding: 12px 28px; border-radius: 25px; z-index: 99999; font-size: 0.95rem; font-weight: 500; box-shadow: 0 4px 20px rgba(0,0,0,0.3); animation: toastSlideDown 0.3s ease; pointer-events: none;`;
+            toast.textContent = icons[type] + ' ' + message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'toastSlideUp 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        function cityNameToCode(cityName) {
+            const map = {
+                '北京': 'beijing', '上海': 'shanghai', '深圳': 'shenzhen',
+                '广州': 'guangzhou', '成都': 'chengdu', '杭州': 'hangzhou',
+                '武汉': 'wuhan', '南京': 'nanjing', '西安': 'xian',
+                '重庆': 'chongqing', '天津': 'tianjin', '苏州': 'suzhou',
+                '青岛': 'qingdao', '长沙': 'changsha', '郑州': 'zhengzhou',
+                '东莞': 'dongguan', '福州': 'fuzhou', '厦门': 'xiamen'
+            };
+            return map[cityName] || 'other';
+        }
+
+        function loadUserCourts() {
+            try {
+                const userCourts = JSON.parse(localStorage.getItem('myAddedCourts') || '[]');
+                const approved = userCourts.filter(c => c.status === 'approved');
+                if (approved.length === 0) return;
+
+                const grid = document.getElementById('court-grid');
+                if (!grid) return;
+
+                approved.forEach(court => {
+                    const existing = grid.querySelector('[data-user-court-id="' + court.id + '"]');
+                    if (existing) return;
+
+                    const cityCode = cityNameToCode(court.city);
+                    const price = court.price || 60;
+                    const rating = (4.0 + Math.random() * 0.8).toFixed(1);
+                    const distance = (1 + Math.random() * 8).toFixed(1);
+
+                    let tagsHtml = '';
+                    if (court.facilities && court.facilities.length > 0) {
+                        court.facilities.slice(0, 3).forEach(f => {
+                            tagsHtml += `<span class="tag good">${f}</span>`;
+                        });
+                    }
+                    if (court.courtCount) {
+                        tagsHtml += `<span class="tag info">${court.courtCount}</span>`;
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = 'court-card';
+                    card.dataset.city = cityCode;
+                    card.dataset.district = court.district || '';
+                    card.setAttribute('data-user-court-id', court.id);
+                    card.innerHTML = `
+                        <div class="court-image">
+                            🏸
+                            <span class="court-badge">用户推荐</span>
+                            <span class="distance">${distance}km</span>
+                        </div>
+                        <div class="court-info">
+                            <div class="court-header">
+                                <div class="court-name">${court.name}</div>
+                                <div class="court-rating">⭐ ${rating}</div>
+                            </div>
+                            <div class="court-location">📍 ${court.address || ''}</div>
+                            <div class="court-tags">${tagsHtml}</div>
+                            <div class="court-footer">
+                                <div class="price-info">
+                                    <span class="price">¥${price}</span>
+                                    <span class="price-unit">/小时 起</span>
+                                </div>
+                                <button class="book-btn" onclick="openBookModal(this, event)">预约场地</button>
+                            </div>
+                        </div>
+                    `;
+                    card.onclick = function() { openCourtDetail('user_' + court.id); };
+                    grid.appendChild(card);
+                });
+
+                applyFiltersAndSort();
+            } catch (e) {
+                console.error('加载用户球馆失败:', e);
+            }
+        }
+
+        window.onload = function() {
+            switchCity('all');
+            loadUserCourts();
+
+            // 事件委托：球馆卡片上的预约按钮，阻止冒泡
+            document.getElementById('court-grid').addEventListener('click', function(e) {
+                const btn = e.target.closest('.book-btn');
+                if (btn) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    try {
+                        openBookModal(btn);
+                    } catch (err) {
+                        showToast('打开预约失败：' + err.message, 'error');
+                        console.error(err);
+                    }
+                }
+            });
+
+            // 搜索按钮
+            const searchBtn = document.querySelector('.search-bar button');
+            if (searchBtn) {
+                searchBtn.addEventListener('click', function() {
+                    const input = document.querySelector('.search-bar input');
+                    if (input && input.value.trim()) {
+                        const keyword = input.value.trim();
+                        const cards = document.querySelectorAll('.court-card');
+                        let count = 0;
+                        cards.forEach(card => {
+                            const name = card.querySelector('.court-name')?.textContent || '';
+                            const loc = card.querySelector('.court-location')?.textContent || '';
+                            const match = name.indexOf(keyword) > -1 || loc.indexOf(keyword) > -1;
+                            const cityMatch = card.dataset.city === currentState.city;
+                            card.style.display = (match && cityMatch) ? 'block' : 'none';
+                            if (match && cityMatch) count++;
+                        });
+                        document.querySelector('.sort-bar span:first-child').textContent = '共找到 ' + count + ' 家球馆';
+                        showToast('搜索"' + keyword + '"，找到' + count + '家球馆', 'info');
+                    } else {
+                        applyFiltersAndSort();
+                        showToast('已显示全部球馆', 'info');
+                    }
+                });
+            }
+
+            // 搜索框回车搜索
+            const searchInput = document.querySelector('.search-bar input');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        document.querySelector('.search-bar button')?.click();
+                    }
+                });
+            }
+
+            showToast('欢迎使用约球星球！已为您加载北京的球馆', 'success');
+        };
+    </script>
+    <script>
+    // 返回顶部按钮
+    (function initBackToTop() {
+        const btn = document.createElement('div');
+        btn.className = 'back-to-top';
+        btn.innerHTML = '↑';
+        btn.onclick = function() { window.scrollTo({ top: 0, behavior: 'smooth' }); };
+        document.body.appendChild(btn);
+
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 400) {
+                btn.classList.add('visible');
+            } else {
+                btn.classList.remove('visible');
+            }
+        });
+    })();
+    </script>
+</body>
+</html>
