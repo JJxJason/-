@@ -166,11 +166,14 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-        
+
         .section h3 {
             font-size: 1.3rem;
             color: var(--primary-color);
+            white-space: nowrap;
         }
         
         .section-header a {
@@ -945,6 +948,10 @@
                 flex-direction: column;
                 gap: 10px;
                 text-align: center;
+                align-items: center;
+            }
+            .match-info {
+                text-align: center;
             }
             .match-result {
                 text-align: center;
@@ -961,6 +968,9 @@
             .level-options, .theme-options {
                 grid-template-columns: 1fr;
             }
+            .achievement-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
             .achievement-card {
                 padding: 12px;
             }
@@ -968,6 +978,26 @@
                 width: 40px;
                 height: 40px;
                 font-size: 1.2rem;
+            }
+            .section-header {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .friend-item {
+                flex-wrap: wrap;
+            }
+            .friend-time {
+                width: 100%;
+                text-align: right;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .achievement-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
@@ -1263,7 +1293,7 @@
                 <h3>🏆 我的成就</h3>
                 <a href="javascript:void(0)" onclick="showAllAchievements()">查看全部</a>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+            <div class="achievement-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
                 <div class="achievement-card">
                     <div class="achievement-icon" style="background: linear-gradient(135deg, #ffd700, #ffb700);">🎯</div>
                     <div class="achievement-name">新手入门</div>
@@ -1288,9 +1318,9 @@
         </div>
 
         <!-- 球友排行榜 -->
-        <div class="section" style="margin-top:30px;">
-            <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h2 style="color:var(--primary-color); font-size:1.4rem;">🏆 球友排行榜</h2>
+        <div class="section">
+            <div class="section-header">
+                <h3>🏆 球友排行榜</h3>
                 <div style="display:flex; gap:8px;">
                     <button onclick="switchRankTab('active')" id="rank-tab-active" style="background:rgba(249,212,35,0.2); border:1px solid var(--primary-color); color:var(--primary-color); padding:6px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem;">活跃度</button>
                     <button onclick="switchRankTab('winrate')" id="rank-tab-winrate" style="background:rgba(255,255,255,0.1); border:1px solid var(--dark-border); color:#fff; padding:6px 16px; border-radius:20px; cursor:pointer; font-size:0.85rem;">胜率</button>
@@ -1303,9 +1333,9 @@
         </div>
 
         <!-- 打球热力图 -->
-        <div class="section" style="margin-top:30px;">
-            <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h2 style="color:var(--primary-color); font-size:1.4rem;">📊 打球热力图</h2>
+        <div class="section">
+            <div class="section-header">
+                <h3>📊 打球热力图</h3>
                 <span style="font-size:0.85rem; color:rgba(255,255,255,0.4);">最近 12 周</span>
             </div>
             <div style="background:var(--dark-card); border:1px solid var(--dark-border); border-radius:15px; padding:25px;">
