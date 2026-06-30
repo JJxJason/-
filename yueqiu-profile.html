@@ -2036,12 +2036,7 @@
             document.getElementById('notify-save').classList.add('show');
             setTimeout(() => closeModal('notification-modal'), 1500);
         }
-        
-        function saveTheme() {
-            document.getElementById('theme-save').classList.add('show');
-            setTimeout(() => closeModal('theme-modal'), 1500);
-        }
-        
+
         function openAddMatchModal() {
             const now = new Date();
             const defaultDate = now.toISOString().slice(0, 10);
@@ -2236,7 +2231,9 @@
             let myMatches = JSON.parse(localStorage.getItem('myMatches') || '[]');
             myMatches = myMatches.filter(m => m.id !== id);
             localStorage.setItem('myMatches', JSON.stringify(myMatches));
-            location.reload();
+            document.querySelectorAll('#match-list-container .match-item[data-mine="true"]').forEach(el => el.remove());
+            renderMyMatches();
+            syncWinTrendWithMatches();
         }
 
         let myMatchesChangeListeners = [];
@@ -2283,17 +2280,25 @@
         }
 
         function getAllMatches() {
+            const fmtDate = (daysAgo, time) => {
+                const d = new Date();
+                d.setDate(d.getDate() - daysAgo);
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return y + '-' + m + '-' + day + ' ' + time;
+            };
             const defaultMatches = [
-                { title: '周四夜战 · 高新体育馆', date: '2024-01-18 19:00', score: '21:18', set: '2:0 胜', win: true },
-                { title: '周末高手局 · 奥体中心', date: '2024-01-14 14:00', score: '19:21', set: '1:2 负', win: false },
-                { title: '新人友好局 · 阳光俱乐部', date: '2024-01-12 20:00', score: '21:15', set: '2:0 胜', win: true },
-                { title: '周三双打局 · 城北球馆', date: '2024-01-10 19:30', score: '21:19', set: '2:1 胜', win: true },
-                { title: '周一晨练 · 江宁体育中心', date: '2024-01-08 07:00', score: '21:17', set: '2:1 胜', win: true },
-                { title: '周五夜场 · 五环体育馆', date: '2024-01-05 20:00', score: '17:21', set: '0:2 负', win: false },
-                { title: '双打友谊赛 · 阳光俱乐部', date: '2024-01-03 19:00', score: '21:16', set: '2:0 胜', win: true },
-                { title: '周末切磋 · 奥林羽毛球馆', date: '2023-12-30 15:00', score: '21:19', set: '2:1 胜', win: true },
-                { title: '俱乐部联赛 · 高新体育馆', date: '2023-12-27 19:30', score: '19:21', set: '1:2 负', win: false },
-                { title: '年终争霸赛 · 城东球馆', date: '2023-12-24 14:00', score: '21:14', set: '2:0 胜', win: true }
+                { title: '周四夜战 · 高新体育馆', date: fmtDate(2, '19:00'), score: '21:18', set: '2:0 胜', win: true },
+                { title: '周末高手局 · 奥体中心', date: fmtDate(6, '14:00'), score: '19:21', set: '1:2 负', win: false },
+                { title: '新人友好局 · 阳光俱乐部', date: fmtDate(8, '20:00'), score: '21:15', set: '2:0 胜', win: true },
+                { title: '周三双打局 · 城北球馆', date: fmtDate(10, '19:30'), score: '21:19', set: '2:1 胜', win: true },
+                { title: '周一晨练 · 江宁体育中心', date: fmtDate(12, '07:00'), score: '21:17', set: '2:1 胜', win: true },
+                { title: '周五夜场 · 五环体育馆', date: fmtDate(15, '20:00'), score: '17:21', set: '0:2 负', win: false },
+                { title: '双打友谊赛 · 阳光俱乐部', date: fmtDate(17, '19:00'), score: '21:16', set: '2:0 胜', win: true },
+                { title: '周末切磋 · 奥林羽毛球馆', date: fmtDate(21, '15:00'), score: '21:19', set: '2:1 胜', win: true },
+                { title: '俱乐部联赛 · 高新体育馆', date: fmtDate(24, '19:30'), score: '19:21', set: '1:2 负', win: false },
+                { title: '年终争霸赛 · 城东球馆', date: fmtDate(60, '14:00'), score: '21:14', set: '2:0 胜', win: true }
             ];
             try {
                 const myMatches = JSON.parse(localStorage.getItem('myMatches') || '[]');
@@ -2781,7 +2786,7 @@
 
             renderMyActivities();
 
-            alert('动态发布成功！');
+            showToast('动态发布成功！', 'success');
         }
 
         function renderMyActivities() {
@@ -2821,7 +2826,8 @@
             let myActivities = JSON.parse(localStorage.getItem('myActivities') || '[]');
             myActivities = myActivities.filter(a => a.id !== id);
             localStorage.setItem('myActivities', JSON.stringify(myActivities));
-            location.reload();
+            document.querySelectorAll('#friend-list-container .friend-item[data-mine="true"]').forEach(el => el.remove());
+            renderMyActivities();
         }
 
         function showAllFriendActivities() {
@@ -3280,22 +3286,96 @@
             }).join('');
         }
 
+        // 生成或读取持久化的热力图数据（基于真实比赛记录 + 固定种子）
+        function getHeatmapData() {
+            const weeks = 12;
+            const days = 7;
+            const STORAGE_KEY = 'yueqiu_heatmap_levels';
+
+            // 1) 先尝试从 localStorage 读取已固定的数据
+            let levels = null;
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed) && parsed.length === weeks * days) {
+                        levels = parsed;
+                    }
+                }
+            } catch (e) {
+                levels = null;
+            }
+
+            // 2) 首次访问：用固定种子生成一次，永久保存
+            if (!levels) {
+                levels = [];
+                // 使用 seeded pseudo-random，保证首次生成结果可复现
+                let seed = 20240115;
+                const rand = () => {
+                    seed = (seed * 9301 + 49297) % 233280;
+                    return seed / 233280;
+                };
+                for (let w = 0; w < weeks; w++) {
+                    for (let d = 0; d < days; d++) {
+                        const isWeekend = d >= 5;
+                        const random = rand();
+                        let level = 0;
+                        if (isWeekend) {
+                            if (random < 0.15) level = 0;
+                            else if (random < 0.3) level = 1;
+                            else if (random < 0.55) level = 2;
+                            else if (random < 0.8) level = 3;
+                            else level = 4;
+                        } else {
+                            if (random < 0.5) level = 0;
+                            else if (random < 0.75) level = 1;
+                            else if (random < 0.9) level = 2;
+                            else if (random < 0.97) level = 3;
+                            else level = 4;
+                        }
+                        levels.push(level);
+                    }
+                }
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(levels));
+                } catch (e) { /* 忽略写入错误 */ }
+            }
+
+            // 3) 用真实比赛记录覆盖对应日期的格子（有记录的日期 → 至少 level 2）
+            try {
+                const matches = JSON.parse(localStorage.getItem('myMatches') || '[]');
+                const today = new Date();
+                matches.forEach(m => {
+                    if (!m.date) return;
+                    const matchDate = new Date(m.date);
+                    if (isNaN(matchDate.getTime())) return;
+                    const diffDays = Math.floor((today - matchDate) / (1000 * 60 * 60 * 24));
+                    if (diffDays < 0 || diffDays >= weeks * days) return;
+                    // 让最旧的日期对应第一个格子
+                    const idx = weeks * days - 1 - diffDays;
+                    if (idx >= 0 && idx < levels.length) {
+                        levels[idx] = Math.max(levels[idx], 2);
+                    }
+                });
+            } catch (e) { /* 忽略 */ }
+
+            return { levels, weeks, days };
+        }
+
         function renderHeatmap() {
             const container = document.getElementById('heatmap-container');
             if (!container) return;
 
-            const weeks = 12;
-            const days = 7;
+            const { levels, weeks, days } = getHeatmapData();
             const dayNames = ['一', '二', '三', '四', '五', '六', '日'];
 
-            // 生成模拟数据（12周 x 7天）
+            // 生成热力图（12周 x 7天）
             let html = '<div style="display:inline-flex; gap:3px;">';
 
-            // 星期标签列
-            html += '<div style="display:flex; flex-direction:column; gap:3px; margin-right:5px;">';
-            html += '<div style="height:16px;"></div>'; // 顶部留空
+            // 星期标签列（与格子列完全对齐：相同高度、相同 gap）
+            html += '<div style="display:flex; flex-direction:column; gap:3px; margin-right:6px;">';
             for (let d = 0; d < days; d++) {
-                html += `<div style="height:16px; line-height:16px; font-size:0.7rem; color:rgba(255,255,255,0.3); text-align:right; width:16px;">${dayNames[d]}</div>`;
+                html += `<div style="width:16px; height:16px; line-height:16px; font-size:0.7rem; color:rgba(255,255,255,0.3); text-align:center;">${dayNames[d]}</div>`;
             }
             html += '</div>';
 
@@ -3308,23 +3388,7 @@
             for (let w = 0; w < weeks; w++) {
                 html += '<div style="display:flex; flex-direction:column; gap:3px;">';
                 for (let d = 0; d < days; d++) {
-                    // 模拟数据：周末打球概率更高
-                    const isWeekend = d >= 5;
-                    const random = Math.random();
-                    let level = 0;
-                    if (isWeekend) {
-                        if (random < 0.15) level = 0;
-                        else if (random < 0.3) level = 1;
-                        else if (random < 0.55) level = 2;
-                        else if (random < 0.8) level = 3;
-                        else level = 4;
-                    } else {
-                        if (random < 0.5) level = 0;
-                        else if (random < 0.75) level = 1;
-                        else if (random < 0.9) level = 2;
-                        else if (random < 0.97) level = 3;
-                        else level = 4;
-                    }
+                    const level = levels[w * days + d] || 0;
 
                     totalDays++;
                     if (level > 0) {
@@ -3343,7 +3407,7 @@
                         'rgba(249,212,35,0.95)'
                     ];
                     const counts = ['0场', '1场', '2场', '3场', '4场+'];
-                    html += `<div style="width:16px; height:16px; border-radius:3px; background:${colors[level]}; cursor:pointer; transition:transform 0.2s;" title="周${dayNames[d]}: ${counts[level]}" onmouseover="this.style.transform='scale(1.4);" onmouseout="this.style.transform='';"></div>`;
+                    html += `<div style="width:16px; height:16px; border-radius:3px; background:${colors[level]}; cursor:pointer; transition:transform 0.2s;" title="周${dayNames[d]}: ${counts[level]}" onmouseover="this.style.transform='scale(1.4)'" onmouseout="this.style.transform='';"></div>`;
                 }
                 html += '</div>';
             }

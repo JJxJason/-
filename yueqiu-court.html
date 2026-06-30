@@ -1595,7 +1595,7 @@
                     </ul>
                 </div>
                 
-                <div class="modal-buttons" style="display: flex; gap: 12px; position: sticky; bottom: 0; background: rgba(20, 30, 40, 0.98); padding: 15px -20px; margin: 0 -20px -30px; padding-left: 20px; padding-right: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div class="modal-buttons" style="display: flex; gap: 12px; position: sticky; bottom: 0; background: rgba(20, 30, 40, 0.98); padding: 15px 20px; margin: 0 -20px -30px; padding-left: 20px; padding-right: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
                     <button class="btn-secondary" onclick="closeBookModal()" style="flex: 1; padding: 12px 24px; border-radius: 12px; border: none; font-size: 1rem; cursor: pointer; background: rgba(255,255,255,0.1); color: #fff;">取消</button>
                     <button class="btn-primary" onclick="submitBook()" style="flex: 1; padding: 12px 24px; border-radius: 12px; border: none; font-size: 1rem; cursor: pointer; background: linear-gradient(135deg, #f9d423, #ff4e50); color: #fff;">确认预约</button>
                 </div>
@@ -2749,27 +2749,9 @@
 
         function reverseGeocode(lat, lng) {
             const btn = document.querySelector('.location-btn');
-            
-            const url = `https://restapi.amap.com/v3/geocode/regeo?key=您的高德API密钥&location=${lng},${lat}&radius=1000&extensions=all`;
-            
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.regeocode && data.regeocode.addressComponent) {
-                        const addr = data.regeocode.addressComponent;
-                        const city = addr.city || addr.province;
-                        const district = addr.district || addr.city;
-                        
-                        if (city) {
-                            updateLocationDisplay(city, district);
-                            return;
-                        }
-                    }
-                    fallbackToIPLocation();
-                })
-                .catch(() => {
-                    fallbackToIPLocation();
-                });
+            btn.classList.remove('loading');
+            btn.innerHTML = '<span class="location-icon">📍</span><span>手动选择</span>';
+            showToast('定位已获取，请手动选择城市', 'info');
         }
 
         function fallbackToIPLocation() {
@@ -3008,8 +2990,10 @@
             modal.style.zIndex = '2000';
 
             const [h, m] = info.startTime.split(':').map(Number);
-            const endHour = (h + info.duration);
-            const endTime = String(endHour).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+            const totalMinutes = h * 60 + m + info.duration * 60;
+            const endH = Math.floor(totalMinutes / 60);
+            const endM = totalMinutes % 60;
+            const endTime = String(endH).padStart(2, '0') + ':' + String(endM).padStart(2, '0');
 
             const orderId = 'YQ' + Date.now().toString().slice(-10);
 
@@ -3300,7 +3284,7 @@
                 isRecommend: badgeEl && badgeEl.textContent.indexOf('热门') > -1,
                 isVip: tags.indexOf('VIP场地') > -1 || tags.indexOf('高端') > -1 || price >= 120,
                 isCheap: price <= 70,
-                isIndoor: tags.indexOf('室内') > -1 || tags.indexOf('专业地胶') > -1 || true,
+                isIndoor: tags.indexOf('室内') > -1 || tags.indexOf('专业地胶') > -1,
                 isNearSubway: locationText.indexOf('地铁') > -1 || locationText.indexOf('站') > -1 || tags.indexOf('近地铁') > -1
             };
         }
@@ -3436,6 +3420,8 @@
         }
 
         function openBookModalFromDetail() {
+            const courtModal = document.getElementById('court-modal');
+            if (courtModal) courtModal.classList.remove('active');
             const detailModal = document.getElementById('court-modal');
             const titleEl = detailModal.querySelector('.modal-title h2');
             const locationEl = detailModal.querySelector('.modal-location');
@@ -3542,14 +3528,25 @@
 
         function loadUserCourts() {
             try {
-                const userCourts = JSON.parse(localStorage.getItem('myAddedCourts') || '[]');
-                const approved = userCourts.filter(c => c.status === 'approved');
-                if (approved.length === 0) return;
+                let userCourts = JSON.parse(localStorage.getItem('myAddedCourts') || '[]');
+                if (userCourts.length === 0) return;
+
+                // 自动把所有球馆设为 approved（兼容旧数据，添加后直接显示）
+                let changed = false;
+                userCourts.forEach(c => {
+                    if (c.status !== 'approved') {
+                        c.status = 'approved';
+                        changed = true;
+                    }
+                });
+                if (changed) {
+                    localStorage.setItem('myAddedCourts', JSON.stringify(userCourts));
+                }
 
                 const grid = document.getElementById('court-grid');
                 if (!grid) return;
 
-                approved.forEach(court => {
+                userCourts.forEach(court => {
                     const existing = grid.querySelector('[data-user-court-id="' + court.id + '"]');
                     if (existing) return;
 
@@ -3637,7 +3634,7 @@
                             const name = card.querySelector('.court-name')?.textContent || '';
                             const loc = card.querySelector('.court-location')?.textContent || '';
                             const match = name.indexOf(keyword) > -1 || loc.indexOf(keyword) > -1;
-                            const cityMatch = card.dataset.city === currentState.city;
+                            const cityMatch = currentState.city === 'all' || card.dataset.city === currentState.city;
                             card.style.display = (match && cityMatch) ? 'block' : 'none';
                             if (match && cityMatch) count++;
                         });

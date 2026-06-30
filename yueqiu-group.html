@@ -1456,17 +1456,30 @@
 
             window.currentDetailCard = card;
 
-            const title = card.querySelector('.group-title').textContent;
-            const status = card.querySelector('.group-status').textContent;
-            const time = card.querySelectorAll('.info-row span')[1].textContent;
-            const level = card.querySelector('.info-row:nth-child(2) .value').textContent;
-            const people = card.querySelector('.info-row:nth-child(3) .value').textContent;
-            const fee = card.querySelector('.info-row:nth-child(4) .value').textContent;
-            const locationName = card.querySelector('.location-name').textContent;
-            const locationDetail = card.querySelector('.location-detail').innerHTML;
-            const organizerName = card.querySelector('.organizer-name').textContent;
-            const organizerLevel = card.querySelector('.organizer-level').textContent;
-            const organizerAvatar = card.querySelector('.organizer-avatar').textContent;
+            const titleEl = card.querySelector('.group-title');
+            const statusEl = card.querySelector('.group-status');
+            const timeEl = card.querySelectorAll('.info-row span')[1];
+            const levelEl = card.querySelector('.info-row:nth-child(2) .value');
+            const peopleEl = card.querySelector('.info-row:nth-child(3) .value');
+            const feeEl = card.querySelector('.info-row:nth-child(4) .value');
+            const locationNameEl = card.querySelector('.location-name');
+            const locationDetailEl = card.querySelector('.location-detail');
+            const organizerNameEl = card.querySelector('.organizer-name');
+            const organizerLevelEl = card.querySelector('.organizer-level');
+            const organizerAvatarEl = card.querySelector('.organizer-avatar');
+
+            // 动态生成的卡片（如“我创建的球局”）可能缺少部分元素，这里统一做 null 防御，避免抛错崩溃
+            const title = titleEl ? titleEl.textContent : '未知球局';
+            const status = statusEl ? statusEl.textContent : '进行中';
+            const time = timeEl ? timeEl.textContent : '';
+            const level = levelEl ? levelEl.textContent : '';
+            const people = peopleEl ? peopleEl.textContent : '';
+            const fee = feeEl ? feeEl.textContent : '';
+            const locationName = locationNameEl ? locationNameEl.textContent : '';
+            const locationDetail = locationDetailEl ? locationDetailEl.innerHTML : '';
+            const organizerName = organizerNameEl ? organizerNameEl.textContent : '';
+            const organizerLevel = organizerLevelEl ? organizerLevelEl.textContent : '';
+            const organizerAvatar = organizerAvatarEl ? organizerAvatarEl.textContent : '羽';
 
             const modal = document.createElement('div');
             modal.className = 'modal-overlay active';
@@ -1539,7 +1552,8 @@
             }
 
             const card = btn.closest('.group-card');
-            const title = card.querySelector('.group-title').textContent;
+            const titleEl = card.querySelector('.group-title');
+            const title = titleEl ? titleEl.textContent : '未知球局';
 
             const existingJoins = JSON.parse(localStorage.getItem('myGroupJoins') || '[]');
             const alreadyJoined = existingJoins.some(j => j.title === title);
@@ -1548,11 +1562,17 @@
                 return;
             }
 
-            const time = card.querySelectorAll('.info-row span')[1].textContent;
-            const level = card.querySelector('.info-row:nth-child(2) .value').textContent;
-            const fee = card.querySelector('.info-row:nth-child(4) .value').textContent;
-            const location = card.querySelector('.location-name').textContent;
-            const organizer = card.querySelector('.organizer-name').textContent;
+            // 对可能缺失的元素做 null 防御，避免动态卡片抛错
+            const timeEl = card.querySelectorAll('.info-row span')[1];
+            const levelEl = card.querySelector('.info-row:nth-child(2) .value');
+            const feeEl = card.querySelector('.info-row:nth-child(4) .value');
+            const locationEl = card.querySelector('.location-name');
+            const organizerEl = card.querySelector('.organizer-name');
+            const time = timeEl ? timeEl.textContent : '';
+            const level = levelEl ? levelEl.textContent : '';
+            const fee = feeEl ? feeEl.textContent : '';
+            const location = locationEl ? locationEl.textContent : '';
+            const organizer = organizerEl ? organizerEl.textContent : '';
 
             currentJoinInfo = { title, time, level, fee, location, organizer, currentCard: card };
 
@@ -1651,10 +1671,36 @@
             btn.disabled = true;
 
             setTimeout(() => {
+                // 从时间显示串（如“本周三 19:30 - 21:30”）解析球局日期，用于过期清理。
+                // removeExpiredGroups 会按日期清理报名记录，缺少 date 字段会导致记录永不过期。
+                const gameDate = (function parseGameDate(timeStr) {
+                    const pad = n => String(n).padStart(2, '0');
+                    const toISO = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+                    if (!timeStr) return toISO(new Date());
+                    const now = new Date();
+                    if (/今天/.test(timeStr)) return toISO(now);
+                    if (/明天/.test(timeStr)) { const t = new Date(now); t.setDate(t.getDate() + 1); return toISO(t); }
+                    const m = timeStr.match(/(\d{1,2})月(\d{1,2})日/);
+                    if (m) { const d = new Date(now.getFullYear(), parseInt(m[1]) - 1, parseInt(m[2])); return toISO(d); }
+                    const dayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 7, '天': 7 };
+                    const wm = timeStr.match(/周(.)/);
+                    if (wm && dayMap[wm[1]] !== undefined) {
+                        const target = dayMap[wm[1]];
+                        const cur = now.getDay() === 0 ? 7 : now.getDay();
+                        let diff = target - cur;
+                        if (diff < 0) diff += 7;
+                        const d = new Date(now);
+                        d.setDate(d.getDate() + diff);
+                        return toISO(d);
+                    }
+                    return toISO(now);
+                })(currentJoinInfo.time);
+
                 const joinRecord = {
                     joinId: 'YQJ' + Date.now().toString().slice(-10),
                     title: currentJoinInfo.title,
                     time: currentJoinInfo.time,
+                    date: gameDate,
                     level: currentJoinInfo.level,
                     fee: currentJoinInfo.fee,
                     location: currentJoinInfo.location,
@@ -2000,6 +2046,24 @@
                 const peopleText = peopleSelect.value;
                 const peopleNum = parseInt(peopleText);
 
+                // 从所选球馆的 optgroup 标签推断所属城市（创建表单没有独立的城市下拉框）
+                let citySlug = 'beijing';
+                if (locationSelect && locationSelect.selectedOptions && locationSelect.selectedOptions[0]) {
+                    const opt = locationSelect.selectedOptions[0];
+                    const grp = opt.closest('optgroup');
+                    const grpLabel = grp ? (grp.label || '') : '';
+                    const cityNameMap = {
+                        '北京': 'beijing', '上海': 'shanghai', '深圳': 'shenzhen', '广州': 'guangzhou',
+                        '成都': 'chengdu', '杭州': 'hangzhou', '武汉': 'wuhan', '南京': 'nanjing',
+                        '西安': 'xian', '重庆': 'chongqing', '天津': 'tianjin', '苏州': 'suzhou',
+                        '青岛': 'qingdao', '长沙': 'changsha', '郑州': 'zhengzhou', '东莞': 'dongguan',
+                        '福州': 'fuzhou', '厦门': 'xiamen'
+                    };
+                    for (const cn in cityNameMap) {
+                        if (grpLabel.indexOf(cn) > -1) { citySlug = cityNameMap[cn]; break; }
+                    }
+                }
+
                 const groupRecord = {
                     groupId: 'YG' + Date.now().toString().slice(-10),
                     title: nameInput.value.trim(),
@@ -2009,6 +2073,7 @@
                     timeDisplay: `${month}月${day}日 周${weekDay} ${timeStr}-${endTime}`,
                     level: levelSelect.value,
                     location: locationSelect ? locationSelect.value : '待补充',
+                    city: citySlug,
                     fee: feeInput && feeInput.value ? `AA 约${feeInput.value}元` : 'AA',
                     people: `1/${peopleNum}人`,
                     maxPeople: peopleNum,
@@ -2047,8 +2112,8 @@
             
             const card = document.createElement('div');
             card.className = 'group-card';
-            const citySelect = document.querySelector('#create-modal select[name="city"]');
-            card.dataset.city = citySelect ? citySelect.value : 'beijing';
+            // 创建表单中没有独立的城市下拉框，城市在 submitCreate 时已从球馆 optgroup 推断并存入 group.city
+            card.dataset.city = group.city || 'beijing';
             card.dataset.district = group.district || '';
             card.dataset.day = group.day || 'weekday';
             card.dataset.level = group.level;
@@ -2314,8 +2379,12 @@
                 }
 
                 if (show && searchTerm) {
-                    const title = group.querySelector('.group-title, h3')?.textContent?.toLowerCase() || '';
-                    if (!title.includes(searchTerm)) {
+                    const titleEl = group.querySelector('.group-title, h3');
+                    const locEl = group.querySelector('.location-name');
+                    const title = (titleEl ? titleEl.textContent : '').toLowerCase();
+                    const loc = (locEl ? locEl.textContent : '').toLowerCase();
+                    // 搜索同时匹配球局名称和球馆名
+                    if (!title.includes(searchTerm) && !loc.includes(searchTerm)) {
                         show = false;
                     }
                 }
@@ -2442,19 +2511,22 @@
             try {
                 const myGroups = JSON.parse(localStorage.getItem('myCreatedGroups') || '[]');
                 const now = new Date();
+                // 注意：g.time 可能是 "19:30-21:30" 这种带横杠的字符串，
+                // new Date("2026-07-01 19:30-21:30") 解析为 Invalid Date 会导致误删。
+                // 这里改为只比较日期（不比较时间），当天结束前都视为有效。
                 const validGroups = myGroups.filter(g => {
                     if (!g.date) return true;
-                    const groupDate = new Date(g.date + ' ' + (g.time || '23:59'));
+                    const groupDate = new Date(g.date + 'T23:59:59');
                     return groupDate > now;
                 });
                 if (validGroups.length < myGroups.length) {
                     localStorage.setItem('myCreatedGroups', JSON.stringify(validGroups));
                 }
-                // 清理过期的报名记录
+                // 清理过期的报名记录（同样只比较日期，避免 j.time 显示串导致 Invalid Date）
                 const myJoins = JSON.parse(localStorage.getItem('myGroupJoins') || '[]');
                 const validJoins = myJoins.filter(j => {
                     if (!j.date) return true;
-                    const joinDate = new Date(j.date + ' ' + (j.time || '23:59'));
+                    const joinDate = new Date(j.date + 'T23:59:59');
                     return joinDate > now;
                 });
                 if (validJoins.length < myJoins.length) {
